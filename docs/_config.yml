@@ -1,0 +1,10 @@
+title: Diario di tesi
+description: Piano e avanzamento settimanale della tesi magistrale
+lang: it
+markdown: kramdown
+permalink: pretty
+defaults:
+  - scope:
+      path: "pages"
+    values:
+      layout: default
