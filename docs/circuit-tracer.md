@@ -11,6 +11,145 @@
 
 Nel caso DAIC, il target piu' semplice e' la differenza tra i logits delle classi `at_or_above_10` e `below_10`. Il risultato e' un **circuito candidato**: una spiegazione strutturale di quali componenti hanno contribuito alla decisione del modello.
 
+## Perche' tracciare una differenza di logits
+
+Un LLM produce, nella posizione di output, un vettore di logits `z(x)`, uno per token del vocabolario. I logits sono valori non normalizzati: la probabilita' di un token `v` e' data dalla softmax
+
+```text
+p(v | x) = exp(z_v(x)) / sum_j exp(z_j(x))
+```
+
+Per una classificazione binaria e' piu' informativo definire un contrasto tra due classi che tracciare il token piu' probabile. Se `A` codifica `PHQ8 < 10` e `B` codifica `PHQ8 >= 10`, il target e':
+
+```text
+g(x) = z_B(x) - z_A(x)
+```
+
+Questa scelta ha tre proprieta' utili:
+
+1. **E' una misura di evidenza relativa.** Vale esattamente
+
+   ```text
+   g(x) = log( p(B | x) / p(A | x) )
+   ```
+
+   quindi un `g` positivo favorisce B rispetto ad A, uno negativo favorisce A. La normalizzazione della softmax si cancella.
+2. **Ha un segno interpretabile.** Ogni nodo e ogni edge del grafo puo' spingere `g` verso B, spingerlo verso A oppure non avere effetto. Tracciare solo `z_B` confonderebbe evidenza per B con componenti che alzano entrambi i logits.
+3. **E' allineata alla decisione.** Se il classificatore sceglie la classe con logit maggiore, il confine decisionale e' `g(x)=0`. Un intervento che cambia il segno di `g` e' un class flip misurabile.
+
+In pratica, i token testuali come `below_10` possono essere spezzati dal tokenizer in piu' token. Per un audit rigoroso usare un output a **singolo token**, ad esempio `A` e `B`, e dichiarare nel prompt la mappa `A = PHQ8 < 10`, `B = PHQ8 >= 10`. Solo dopo si puo' rendere il risultato leggibile in linguaggio naturale. Se si tracciano etichette multi-token, il target deve diventare una somma di log-probabilita' condizionate su piu' posizioni, che e' piu' complessa e meno pulita.
+
+### Esempio DAIC
+
+Supponiamo due versioni della stessa risposta del partecipante: una originale e una in cui la domanda di Ellie e' stata permutata. Il modello produce:
+
+```text
+g(originale) = +2.4    -> odds B:A circa 11:1
+g(domanda permutata) = +0.1
+```
+
+La predizione e' ancora B, ma il margine e' quasi scomparso. Circuit Tracer consente di chiedere se la perdita di `2.3` proviene da feature che codificano la domanda dell'intervistatore, da contenuto della risposta, oppure da entrambi. Questo e' molto piu' informativo di dire soltanto che la probabilita' e' cambiata.
+
+## Da attivazioni dense a feature interpretabili
+
+Un neurone singolo e' spesso polisemantico: puo' contribuire a concetti diversi in contesti diversi. Circuit Tracer usa quindi un **transcoder**, un dizionario sparso che approssima l'output MLP a partire dal suo input.
+
+Per il layer `l`, in forma semplificata:
+
+```text
+h_l          = attivazione densa in ingresso al MLP
+a_l = W_enc h_l + b_enc
+s_l = f(a_l) = feature sparse, non negative
+m_hat_l = W_dec s_l + b_dec = output MLP ricostruito
+```
+
+Dove:
+
+- `h_l` e `m_hat_l` sono vettori densi nel residual stream;
+- `s_l,i` e' l'attivazione della feature sparsa `i`;
+- `f` e' in genere ReLU, JumpReLU o Top-k, quindi poche feature sono attive;
+- `W_dec[:, i]` e' la direzione che la feature `i` scrive nell'output MLP.
+
+Un transcoder non rende magicamente una feature "un concetto clinico". La sua descrizione viene inferita dai massimi esempi di attivazione e dai token che tende ad aumentare o diminuire. La sua utilita' e' rendere il calcolo abbastanza sparso da poter attribuire un percorso.
+
+## Come viene costruito il grafo
+
+Per un prompt `x` e un target scalare `g(x)`, il grafo contiene nodi di quattro tipi:
+
+```text
+token/input embedding -> feature transcoder -> feature downstream -> logit target
+                                  \-> error node ----------->/
+```
+
+Gli **error nodes** rappresentano la parte dell'output MLP che il transcoder non ricostruisce. Sono necessari per fedelta', ma se dominano il grafo ne limitano l'interpretabilita'.
+
+Concettualmente, l'effetto totale di una feature candidata `i` puo' essere definito come intervento:
+
+```text
+TE_i(x) = g(x) - g(x ; s_i <- 0)
+```
+
+Un grande `TE_i` indica che spegnere la feature cambia il contrasto di classe, ma calcolare questa quantita' con un forward pass per ogni feature e' costoso. Circuit Tracer calcola invece effetti diretti per gli edge del grafo. Condizionando sulle non-linearita' osservate del forward pass - ad esempio pattern di attenzione e fattori di LayerNorm - le pre-attivazioni delle feature diventano localmente funzioni lineari dei nodi precedenti. In questa linearizzazione condizionata, l'effetto diretto di un nodo sorgente `u` su un nodo target `v` e' del tipo:
+
+```text
+DE(u -> v | x) = coefficiente_lineare(u, v, x) * attivazione(u, x)
+```
+
+Il coefficiente viene ottenuto con una backward pass dal nodo target, fermando il gradiente attraverso le non-linearita' su cui si condiziona. Ripetendo il procedimento per i nodi tenuti, si ottiene una matrice di adiacenza con effetti diretti e segno. Il grafo visualizzato e' la versione potata di questa matrice, non l'intero calcolo del Transformer.
+
+Questa e' una stima piu' strutturata del semplice `gradient x activation`, ma resta condizionata al forward pass osservato. Per questo la verifica con interventi reali e' indispensabile.
+
+## Cosa significa leggere un edge
+
+Se il grafo contiene un edge positivo:
+
+```text
+feature "sleep-related language"  -- +0.35 -->  logit gap g
+```
+
+la lettura corretta e': *in questo prompt, entro la decomposizione del transcoder, l'attivazione di questa feature contribuisce +0.35 al contrasto B contro A attraverso quell'edge o percorso*. Non significa: *il partecipante ha un disturbo del sonno*.
+
+Un edge negativo riduce `g`, cioe' spinge relativamente verso A. Un circuito puo' contenere sia evidenza positiva sia contro-evidenza: e' proprio il motivo per cui il contrasto tra logits e' preferibile a una generica "importanza" positiva.
+
+## Dall'attribuzione alla prova causale
+
+Il flusso corretto ha tre livelli:
+
+| Livello | Operazione | Cosa si puo' affermare |
+|---|---|---|
+| Attribuzione | Trovare nodi/edge con grande effetto diretto o totale stimato. | Sono candidati importanti per questo calcolo. |
+| Intervento mirato | `s_i <- 0`, `s_i <- valore`, activation patching da un caso sorgente. | La feature puo' causare un cambiamento nel target in questo setting. |
+| Replica e controlli | Ripetere su esempi, seed, split e feature abbinate. | Il meccanismo e' stabile e selettivo, non un artefatto locale. |
+
+Per DAIC, il test piu' informativo e' comparare tre interventi:
+
+1. ablation di una feature candidata del circuito;
+2. ablation di una feature di controllo con stesso layer e attivazione simile;
+3. ablation di una feature casuale.
+
+Se solo il primo riduce in modo consistente `g(x)` sui casi target senza degradare un target linguistico non correlato, l'evidenza e' piu' forte. Il patching e' complementare: si sostituisce l'attivazione della feature o del residual stream con quella di un esempio matched e si verifica se `g` si sposta nella direzione predetta.
+
+## Perche' e' utile specificamente nella tesi
+
+Tracciare `g=z_B-z_A` permette di separare quattro spiegazioni possibili per una buona metrica di classificazione:
+
+| Possibile meccanismo | Cosa mostrerebbe il grafo | Controllo da fare |
+|---|---|---|
+| Contenuto della risposta | Token del partecipante e feature semanticamente coerenti contribuiscono a `g`. | Permutare la domanda e ablate le feature. |
+| Shortcut dell'intervista | Token/feature di Ellie, posizione o lunghezza contribuiscono molto a `g`. | `E-only`, `P-only`, domanda permutata, length matching. |
+| Keyword superficiali | Poche parole esplicite dominano il circuito. | Mascheramento/parafrasi controllata e verifica della selettivita'. |
+| Rumore del transcoder | Error nodes o feature instabili dominano. | Ridurre le conclusioni; cambiare dizionario o riportare limite. |
+
+Il contributo scientifico non e' trovare un grafo esteticamente convincente. E' misurare quale di queste ipotesi e' supportata da effetti con segno, interventi e replica.
+
+## Limiti matematici e pratici
+
+- Il contrasto `g` riguarda la decisione del modello, non la verita' clinica del label.
+- Il grafo e' condizionato a uno specifico prompt e forward pass; circuiti diversi possono essere validi per esempi diversi.
+- Le non-linearita' di attenzione e LayerNorm sono fissate nel calcolo degli effetti diretti; il grafo non cattura automaticamente cosa avverrebbe se esse cambiassero molto dopo un intervento.
+- I transcoders ricostruiscono in modo approssimato gli MLP. Molto flusso attraverso error nodes richiede prudenza.
+- La potatura rende il grafo leggibile ma puo' eliminare percorsi piccoli e cumulativamente importanti. Salvare sempre il grafo completo e le soglie.
+
 ## Cosa non e'
 
 Un grafo Circuit Tracer non e' di per se' una prova di causalita', ne' una spiegazione clinica. L'attribuzione seleziona componenti potenzialmente importanti; la prova viene dopo, con interventi controllati sulla feature o sul percorso indicato dal grafo.
