@@ -16,6 +16,8 @@ Studiare se piccoli modelli a pesi aperti possono stimare un target di screening
 
 I modelli devono restare entro 3B parametri. Il punto di partenza più solido è Gemma 2 2B, con Qwen3 1.7B come replica; entrambi dispongono di strumenti pubblici per Jacobian Lens e Circuit Tracer. Le baseline restano necessarie: TF-IDF + modello lineare e almeno un encoder Transformer.
 
+Per checkpoint già adattati al linguaggio della salute mentale, con dati dichiarati, licenze e limiti d'uso, vedi [modelli Hugging Face per linguaggio psichiatrico e salute mentale](../modelli-psichiatria-huggingface.md).
+
 ## Possibili tesi
 
 | # | Argomento | Domanda centrale | RQ da risolvere | Fattibilità |
