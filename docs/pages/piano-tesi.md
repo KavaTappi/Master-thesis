@@ -1,92 +1,114 @@
 ---
 title: Piano della tesi
 permalink: /
-description: Obiettivi, fasi e diario di avanzamento della tesi.
+description: Possibili tesi, domande di ricerca e piano di lavoro.
 ---
 
 # Piano della tesi
 
-<p class="lead">Uno spazio di lavoro pubblico per rendere visibili obiettivi, decisioni e avanzamenti settimana per settimana.</p>
+<p class="lead">Uno spazio di lavoro per scegliere il perimetro della tesi e rendere visibili decisioni, esperimenti e avanzamenti.</p>
 
-> Aggiorna questa pagina quando cambiano obiettivi, tempi o perimetro del lavoro. I dettagli operativi vivono nel [diario settimanale]({{ '/settimane/' | relative_url }}).
+> Il progetto riguarda modelli su dati sensibili di salute mentale. Ogni risultato va interpretato come audit di un modello o supporto sperimentale allo screening: il PHQ-8 non è una diagnosi clinica e le spiegazioni interne non descrivono stati mentali delle persone.
 
-## Obiettivo
+## Obiettivo comune
 
-_Descrivi qui in poche righe il problema affrontato, il contributo atteso e a chi può essere utile._
+Studiare se piccoli modelli a pesi aperti possono stimare un target di screening da interviste DAIC-WOZ in modo **spiegabile, causale e robusto**. Il contributo non è soltanto una metrica predittiva: occorre verificare quali segnali usa il modello, se gli interventi sulle sue rappresentazioni cambiano davvero la decisione e se il comportamento sopravvive a controlli contro confondenti.
 
-## Domande di ricerca
+I modelli devono restare entro 3B parametri. Il punto di partenza più solido è Gemma 2 2B, con Qwen3 1.7B come replica; entrambi dispongono di strumenti pubblici per Jacobian Lens e Circuit Tracer. Le baseline restano necessarie: TF-IDF + modello lineare e almeno un encoder Transformer.
 
-Le domande seguenti sono proposte alternative e combinabili. Il filo comune è distinguere la **validità formale** dell'output (una scelta appartiene alle opzioni consentite) dalla sua **affidabilità epistemica** (la scelta è corretta, stabile e accompagnata da un'incertezza utilizzabile). I modelli di decisione tipizzata, come Jev e le alternative open source, costituiscono il caso di studio; il piano sperimentale deve comunque includere almeno un classificatore/LLM convenzionale come baseline.
+## Possibili tesi
 
-### RQ1 — Le probabilità restituite da un modello decisionale tipizzato sono calibrate e utili per decidere quando automatizzare?
+| # | Argomento | Domanda centrale | RQ da risolvere | Fattibilità |
+| --- | --- | --- | --- | --- |
+| 1 | [Circuiti causali per PHQ-8](../argomenti-tesi/01-circuiti-causali-phq8.md) | Il modello usa contenuto delle risposte o scorciatoie del protocollo? | segnale predittivo; circuiti; causalità degli interventi | Medio-alta |
+| 2 | [Shortcut della struttura d'intervista](../argomenti-tesi/02-shortcut-struttura-intervista.md) | Quanto predicono domanda, lunghezza e struttura invece della risposta? | contributo di domanda/risposta; invarianza; circuiti; generalizzazione a domande nuove | Alta — consigliata |
+| 3 | [Rappresentazioni latenti dei domini PHQ-8](../argomenti-tesi/03-rappresentazioni-latenti-domini-phq8.md) | Il modello separa concetti relativi ai diversi item PHQ-8? | predizione per item; separazione; causalità; confronto XAI | Media |
+| 4 | [Spiegazioni multimodali testo-voce](../argomenti-tesi/04-spiegazioni-multimodali-testo-voce.md) | Voce e testo offrono informazione complementare e verificabile? | guadagno audio; dominanza di modalità; interazioni causali | Media-bassa |
+| 5 | [Stabilità sotto domain shift](../argomenti-tesi/05-stabilita-spiegazioni-domain-shift.md) | Le spiegazioni restano valide cambiando gruppo, protocollo o dominio? | degradazione; trasferimento J-space; riuso di circuiti; shortcut di community | Media |
 
-**A cosa risponde.** Una probabilità pari a 0,90 dovrebbe corrispondere, su molti casi analoghi, a circa il 90% di decisioni corrette. La domanda verifica se la confidence può essere usata come segnale operativo per: eseguire automaticamente una decisione, richiedere revisione umana o inoltrare il caso a un modello più capace. Risponde quindi a una lacuna dell'explainability pratica: non chiede solo *che cosa* il modello scelga, ma se dichiari correttamente *quanto è affidabile* la propria scelta.
+## RQ della tesi 1 — Circuiti causali per la stima PHQ-8
 
-**Parte quantitativa.** Su uno o più dataset con etichette umane (ad esempio classificazione di ticket, intent detection, policy compliance o documenti), confrontare modelli tipizzati e baseline con:
+**RQ1. Esiste un segnale predittivo testuale riproducibile?** Confrontare baseline lineari, encoder e decoder su `P-only`, con split per partecipante. Risponde se il problema è sufficientemente identificabile prima di interpretare il modello.
 
-- accuratezza, macro-F1 e log-loss;
-- Expected Calibration Error (ECE), Brier score e reliability diagram, prima e dopo un'eventuale calibrazione della temperatura;
-- curve rischio-copertura / selective risk: errore residuo quando il sistema si astiene nei casi sotto una soglia di confidence;
-- costo e latenza medi per decisione, per misurare il compromesso tra qualità, velocità e quota di casi inviati alla revisione.
+**RQ2. Quali feature e circuiti contribuiscono alla classe?** Leggere i concetti nei layer intermedi con Jacobian Lens e tracciare, con Circuit Tracer, il contrasto `logit(at_or_above_10) - logit(below_10)`. Risponde a *quale calcolo interno* sostiene la decisione.
 
-L'analisi dovrebbe riportare intervalli di confidenza bootstrap al 95% e confronti appaiati tra modelli (ad esempio McNemar per l'accuratezza; bootstrap sulle differenze per ECE e Brier). Il risultato atteso non è necessariamente che un modello sia “migliore”, ma identificare soglie di confidence che mantengano un rischio massimo esplicito.
+**RQ3. Le feature trovate sono causalmente rilevanti?** Ablation e patching devono produrre un `delta-logit` selettivo, maggiore di feature di controllo. Risponde se il grafo è una spiegazione fedele oppure una sola attribuzione correlazionale.
 
-### RQ2 — Quanto sono robuste decisione e confidence rispetto a variazioni semanticamente irrilevanti dell'input e delle opzioni?
+Metriche: balanced accuracy, macro-F1, AUROC/AUPRC, MAE/RMSE per lo score continuo, overlap di feature/edge, `delta-logit`, class flip rate e intervalli bootstrap.
 
-**A cosa risponde.** Un sistema spiegabile deve produrre decisioni coerenti quando il significato non cambia. Questa domanda verifica se il modello è sensibile a fattori accidentali: ordine delle alternative, loro denominazione, parafrasi del testo, informazioni ridondanti o stile linguistico. È particolarmente importante per i modelli “type-safe”: il tipo può essere corretto pur selezionando un'opzione diversa per motivi non giustificabili.
+## RQ della tesi 2 — Shortcut della struttura d'intervista
 
-**Parte quantitativa.** Costruire per ciascun esempio un insieme di perturbazioni controllate: permutazione delle label, parafrasi preservando il significato, rimozione/aggiunta di testo irrilevante e rinomina delle opzioni senza cambiarne la definizione. Misurare:
+**RQ1. Quanto predicono separatamente risposta e domanda?** Confrontare `P-only`, `E-only`, `E+P` e risposte bilanciate per lunghezza/tipo di domanda. Risponde se il dataset introduce leakage dal protocollo.
 
-- tasso di invariance: percentuale di casi in cui la decisione resta uguale dopo una perturbazione semanticamente neutra;
-- variazione assoluta media della confidence e divergenza Jensen-Shannon tra le distribuzioni sulle opzioni;
-- performance sulle versioni originali e perturbate, con relativo degrado percentuale;
-- tasso di inversione della decisione per tipo di perturbazione e per numero di classi.
+**RQ2. La decisione resiste a trasformazioni semanticamente neutre?** Rimuovere o permutare la domanda, fare length matching e normalizzare filler/disfluenze. Risponde se il modello è stabile quando il contenuto del partecipante non cambia.
 
-Un disegno appaiato consente test di McNemar sulle decisioni e test di permutazione/bootstrap sulla variazione di confidence. L'output della ricerca è una *robustness profile* che indica non soltanto se il modello sbaglia, ma in quali condizioni la sua spiegazione probabilistica perde stabilità.
+**RQ3. Esistono meccanismi distinti per semantica e protocollo?** Confrontare J-space, circuiti e risposta alle ablation nelle condizioni originali e controfattuali. Risponde se lo strumento individua davvero la scorciatoia.
 
-### RQ3 — Un sistema ibrido “decisione + evidenze + spiegazione” produce spiegazioni più fedeli e più utili di una spiegazione generata direttamente da un LLM?
+**RQ4. Il modello generalizza a famiglie di domande non viste?** Usare leave-question-family-out. Risponde se la performance deriva da regolarità generali o da una mappa domanda-label specifica.
 
-**A cosa risponde.** La scelta tipizzata e la sua confidence non equivalgono a una motivazione leggibile. La domanda valuta se una pipeline che (i) prende una decisione, (ii) recupera o seleziona evidenze nel documento e (iii) genera una spiegazione vincolata a tali evidenze sia più auditabile di un LLM che genera decisione e spiegazione nello stesso passaggio. Risponde direttamente al problema delle spiegazioni persuasive ma non fedeli.
+Metriche: differenze appaiate di macro-F1/AUROC, agreement, class flip rate, variazione del logit gap, divergenza Jensen-Shannon, overlap di circuiti e test di McNemar/bootstrap.
 
-**Parte quantitativa.** Preparare un campione annotato con decisione corretta ed evidenze/rationale di riferimento. Confrontare almeno: LLM con spiegazione libera, LLM con output strutturato e pipeline ibrida. Valutare:
+## RQ della tesi 3 — Rappresentazioni dei domini PHQ-8
 
-- qualità della decisione: accuracy e macro-F1;
-- fedeltà dell'evidenza: precision, recall e F1 rispetto ai passaggi annotati; sufficiency e comprehensiveness, cioè quanto la predizione cambia mantenendo o rimuovendo l'evidenza proposta;
-- factual consistency / citation entailment: quota di affermazioni della spiegazione supportate dall'evidenza citata;
-- utilità per l'utente: valutazione cieca di annotatori su chiarezza, azionabilità e fiducia appropriata, con accordo inter-annotatore (Cohen's kappa o Krippendorff's alpha).
+**RQ1. Gli item PHQ-8 sono predicibili separatamente?** Formulare una predizione multi-task dello score totale e dei singoli item. Risponde se il target globale può essere decomposto in domini informativi.
 
-Le differenze possono essere stimate con bootstrap stratificato e, per i giudizi umani ripetuti, con un modello a effetti misti che separi l'effetto del metodo da quello del documento e dell'annotatore.
+**RQ2. Le feature interne sono specifiche o generiche?** Separare feature associate a sonno, energia, umore e altri item da sentiment, negazione, lunghezza e stile. Risponde se il modello codifica concetti distinguibili oppure un unico segnale di distress.
 
-### RQ4 — Quando conviene delegare a un modello generativo o a una revisione umana invece di fidarsi della decisione tipizzata?
+**RQ3. Le feature sono necessarie e sufficienti?** Testare ablation, insertion e patching su ciascun item. Risponde se una feature ha un effetto selettivo sulla predizione del dominio dichiarato.
 
-**A cosa risponde.** Questa domanda trasforma l'incertezza in una politica di controllo. Vuole stabilire se una regola semplice basata su confidence, margine tra prima e seconda opzione e segnali di fuori-distribuzione possa ridurre gli errori senza annullare il vantaggio di costo e latenza. Il contributo è una strategia di *human/LLM-in-the-loop* verificabile, non una promessa generica di sicurezza.
+**RQ4. I metodi meccanicistici sono più fedeli delle spiegazioni post-hoc?** Confrontarli con saliency, attention e rationale testuali sotto lo stesso budget di intervento. Risponde quale spiegazione anticipa meglio l'effetto causale reale.
 
-**Parte quantitativa.** Simulare o implementare politiche di routing: soglia di confidence, soglia sul margine, detector out-of-distribution e combinazioni di esse. Per ogni politica, riportare:
+Metriche: MAE/RMSE e Spearman per score, macro-F1 e quadratic weighted kappa per item, similarità delle direzioni, selettività degli interventi e accordo tra annotatori.
 
-- accuracy finale e tasso di errore sui casi automatizzati;
-- coverage: percentuale di casi risolti dal modello veloce senza escalation;
-- tasso di escalation a revisore/modello generativo, costo atteso e latenza end-to-end;
-- area sotto la curva rischio-copertura e costo per decisione corretta;
-- risultati separati per sottogruppi rilevanti del dominio, per verificare che l'automazione non concentri gli errori su una categoria.
+## RQ della tesi 4 — Spiegazioni multimodali testo-voce
 
-La politica dovrebbe essere scelta su un validation set e valutata una sola volta su un test set tenuto separato. Un'analisi di sensibilità sulle soglie rende esplicito il trade-off e permette di proporre una configurazione adeguata a un rischio target (ad esempio errore inferiore al 5% sui casi automatizzati).
+**RQ1. L'audio aggiunge valore oltre al testo?** Confrontare transcript, COVAREP/formanti, embedding audio e fusione tardiva. Risponde se una componente multimodale è scientificamente giustificata.
 
-### Possibile domanda principale e perimetro consigliato
+**RQ2. Quale modalità guida la decisione?** Rimuovere testo/audio o sostituirne rappresentazioni fra esempi matched. Risponde se esiste complementarità, dominanza o leakage di una modalità.
 
-Una formulazione compatta e realistica è: **“In che misura i modelli di decisione tipizzata forniscono segnali di incertezza calibrati e spiegazioni verificabili per l'automazione selettiva di decisioni testuali?”**
+**RQ3. L'interazione testo-voce è spiegabile causalmente?** Usare token acustici interpretabili nel decoder, oppure un piccolo modello di fusione, e applicare ablation/patching. Risponde a come il modello combina contenuto linguistico e proxy prosodici.
 
-Per una tesi magistrale il perimetro più solido è RQ1 + RQ2, con RQ4 come dimostrazione applicativa. RQ3 è molto interessante ma richiede un dataset con rationale/evidenze annotate e una valutazione umana: conviene includerla solo se tempo e disponibilità di annotatori lo consentono.
+Metriche: guadagno della fusione rispetto al migliore unimodale, `delta-logit` per modality ablation, calibrazione, conditional permutation importance e intervalli bootstrap per partecipante.
+
+## RQ della tesi 5 — Stabilità sotto shift
+
+**RQ1. Prestazione e calibrazione degradano sotto shift?** Addestrare/calibrare su un sottogruppo o dominio e testare su un altro. Risponde se il comportamento è trasferibile, non solo accurato in-distribution.
+
+**RQ2. I concetti J-space si trasferiscono?** Confrontare DAIC con una versione social-media controllata per keyword/community, oppure con sottogruppi e famiglie di domande DAIC. Risponde se le feature semantiche sopravvivono quando cambia la fonte del testo.
+
+**RQ3. I circuiti causali vengono riusati?** Selezionare feature sul dominio sorgente e misurare l'effetto delle ablation sul dominio target. Risponde se la spiegazione è stabile oppure locale al dataset.
+
+**RQ4. Possiamo separare shortcut di intervista e shortcut di community?** Permutare/rimuovere la domanda su DAIC e mascherare auto-diagnosi o riferimenti di community sul dominio esterno. Risponde quale artefatto produce il cambiamento della decisione.
+
+Metriche: generalization gap, Brier/ECE, risk-coverage curve, overlap di feature/edge, selettività cross-domain e intervalli bootstrap gerarchici. I label social non vanno mai trattati come equivalenti a una diagnosi o al PHQ-8.
+
+## Vincoli metodologici comuni
+
+1. Split, soglie, metriche primarie e controlli devono essere fissati prima dell'analisi interpretativa.
+2. L'unità statistica è la sessione/partecipante; il PHQ-8 non assegna un label clinico a ogni turno.
+3. Il backbone resta inizialmente congelato: un LoRA può invalidare lens e transcoders adattati al checkpoint base.
+4. Ogni feature/circuito deve essere testato con interventi, controlli abbinati e replica su esempi/split; un grafo attraente non dimostra causalità.
+5. Non pubblicare trascrizioni, audio, ID o esempi riconoscibili; riportare risultati aggregati e failure table.
+
+## Perimetro consigliato
+
+La scelta più realistica è la **tesi 2**, con la tesi 1 come metodo: audit meccanicistico del contributo di contenuto, domanda e lunghezza in un predittore PHQ-8 basato sulle sole trascrizioni. La tesi 5 diventa il capitolo conclusivo di robustezza, prima tra famiglie di domanda e sottogruppi DAIC; un'estensione Reddit/SWMH è facoltativa e non necessaria per completare la tesi.
+
+La formulazione iniziale può essere:
+
+> *Can mechanistic interventions distinguish symptom-relevant evidence from interview-structure shortcuts in a small language model that estimates PHQ-8 severity from DAIC transcripts?*
 
 ## Piano di lavoro
 
 | Fase | Risultato atteso | Stato |
 | --- | --- | --- |
-| Definizione del problema | Obiettivi, domande di ricerca e perimetro | Da definire |
-| Revisione della letteratura | Fonti selezionate e sintesi critica | Da definire |
-| Progettazione della metodologia | Metodo, dati e criteri di valutazione | Da definire |
-| Sviluppo / analisi | Esperimenti, prototipo o analisi completati | Da definire |
-| Scrittura e revisione | Bozza, feedback e versione finale | Da definire |
+| Scelta del perimetro | Una tesi, RQ, target e criteri di successo selezionati | Da definire |
+| Dati e protocollo | Asset disponibili, split per partecipante, controlli ed etica | Da definire |
+| Baseline | TF-IDF/lineare, encoder e decoder piccolo valutati | Da definire |
+| Audit meccanicistico | J-space, circuiti, ablation e patching con controlli | Da definire |
+| Robustezza | Controfattuali, stabilità per split/domanda/sottogruppo | Da definire |
+| Scrittura e replica | Artefatti riproducibili, tabelle, figure e discussione dei limiti | Da definire |
 
 ## Prossimo passo
 
-Completa le sezioni precedenti e registra il primo avanzamento nel [diario delle settimane]({{ '/settimane/' | relative_url }}).
+Scegliere una delle cinque tesi, fissare target e RQ primarie, quindi registrare il primo avanzamento nel [diario delle settimane]({{ '/settimane/' | relative_url }}).
