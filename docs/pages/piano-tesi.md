@@ -1,116 +1,71 @@
 ---
 title: Piano della tesi
 permalink: /
-description: Possibili tesi, domande di ricerca e piano di lavoro.
+description: Quattro proposte di tesi sull'audit causale di piccoli LLM per la stima sperimentale del PHQ-8.
 ---
 
 # Piano della tesi
 
-<p class="lead">Uno spazio di lavoro per scegliere il perimetro della tesi e rendere visibili decisioni, esperimenti e avanzamenti.</p>
+<p class="lead">Quattro percorsi alternativi, dallo studio dei metodi di interpretabilità all'audit di testo, voce e volto. La scelta finale dipende da accesso ai dati, compatibilità degli strumenti e risorse di calcolo.</p>
 
-> Il progetto riguarda modelli su dati sensibili di salute mentale. Ogni risultato va interpretato come audit di un modello o supporto sperimentale allo screening: il PHQ-8 non è una diagnosi clinica e le spiegazioni interne non descrivono stati mentali delle persone.
+> Il PHQ-8 qui è un target self-report **a livello di sessione**, non una diagnosi. Le analisi spiegano il comportamento di un modello: non attribuiscono uno stato clinico a un singolo turno, una persona o una feature interna. Audio, video e trascrizioni devono rispettare le licenze del corpus e non comparire in artefatti pubblici riconoscibili.
 
-## Obiettivo comune
+## Le quattro proposte
 
-Studiare se piccoli modelli a pesi aperti possono stimare un target di screening da interviste DAIC-WOZ in modo **spiegabile, causale e robusto**. Il contributo non è soltanto una metrica predittiva: occorre verificare quali segnali usa il modello, se gli interventi sulle sue rappresentazioni cambiano davvero la decisione e se il comportamento sopravvive a controlli contro confondenti.
-
-I modelli devono restare entro 3B parametri. Il punto di partenza più solido è Gemma 2 2B, con Qwen3 1.7B come replica; entrambi dispongono di strumenti pubblici per Jacobian Lens e Circuit Tracer. Le baseline restano necessarie: TF-IDF + modello lineare e almeno un encoder Transformer.
-
-Per checkpoint già adattati al linguaggio della salute mentale, con dati dichiarati, licenze e limiti d'uso, vedi [modelli Hugging Face per linguaggio psichiatrico e salute mentale](../modelli-psichiatria-huggingface.md).
-
-## Possibili tesi
-
-| # | Argomento | Domanda centrale | RQ da risolvere | Fattibilità |
+| Proposta | Domanda principale | Evidenza decisiva | Dipendenza principale | Perimetro minimo |
 | --- | --- | --- | --- | --- |
-| 1 | [Circuiti causali per PHQ-8](../argomenti-tesi/01-circuiti-causali-phq8.md) | Il modello usa contenuto delle risposte o scorciatoie del protocollo? | segnale predittivo; circuiti; causalità degli interventi | Medio-alta |
-| 2 | [Shortcut della struttura d'intervista](../argomenti-tesi/02-shortcut-struttura-intervista.md) | Quanto predicono domanda, lunghezza e struttura invece della risposta? | contributo di domanda/risposta; invarianza; circuiti; generalizzazione a domande nuove | Alta — consigliata |
-| 3 | [Rappresentazioni latenti dei domini PHQ-8](../argomenti-tesi/03-rappresentazioni-latenti-domini-phq8.md) | Il modello separa concetti relativi ai diversi item PHQ-8? | predizione per item; separazione; causalità; confronto XAI | Media |
-| 4 | [Spiegazioni multimodali testo-voce](../argomenti-tesi/04-spiegazioni-multimodali-testo-voce.md) | Voce e testo offrono informazione complementare e verificabile? | guadagno audio; dominanza di modalità; interazioni causali | Media-bassa |
-| 5 | [Stabilità sotto domain shift](../argomenti-tesi/05-stabilita-spiegazioni-domain-shift.md) | Le spiegazioni restano valide cambiando gruppo, protocollo o dominio? | degradazione; trasferimento J-space; riuso di circuiti; shortcut di community | Media |
+| [00 — From verbalizable concepts to causal circuits](../argomenti-tesi/00-from-verbalizable-concepts-to-causal-circuits.md) | I concetti letti dal Jacobian Lens e i grafi di Circuit Tracer individuano siti che influenzano davvero il logit PHQ-8? | Il ranking di ciascun metodo, e del loro accordo, anticipa l'effetto di **uno stesso activation patching** sul modello originale | Lens e transcoders compatibili con il medesimo checkpoint; prestazione del modello non banale | un LLM testuale, `P-only`, una classe binaria, pochi concetti prespecificati |
+| [01 — Audit meccanicistico di shortcut del protocollo](../argomenti-tesi/01-audit-meccanicistico-protocolli-intervista.md) | Un LLM usa le risposte o segnali della struttura dell'intervista per predire il target? | Controlli `P-only`/`E-only`/`E+P` e controfattuali del protocollo mostrano una dipendenza; solo allora si cercano componenti interne causalmente valide | dimostrare **prima** che lo shortcut esiste nel LLM studiato | audit comportamentale con possibilità di approfondimento meccanicistico |
+| [02 — Audit causale testo-voce con acoustic landmarks](../argomenti-tesi/02-audit-causale-landmark-acustici-llm.md) | I landmark acustici allineati al testo aggiungono informazione realmente usata dal piccolo LLM? | Il vantaggio della fusione resiste a controlli di lunghezza/qualità e cala con shuffle, mask o swap matched della voce | accesso ad audio e allineamento; costruzione riproducibile dei landmark | testo, landmark, controllo di allineamento, un output binario |
+| [03 — Meccanismi multimodali specifici per item](../argomenti-tesi/03-meccanismi-multimodali-item-phq8-llm.md) | Voce e volto contribuiscono a item PHQ-8 diversi, e le spiegazioni prevedono effetti selettivi? | Mascheramenti, swap e interventi interni alterano l'item bersaglio più degli altri, superando controlli di qualità | disponibilità di score per item, segnali audio/video e potenza statistica sufficiente | pochi item prespecificati come studio pilota, poi estensione agli otto |
 
-## RQ della tesi 1 — Circuiti causali per la stima PHQ-8
+Le quattro proposte sono **alternative**, non capitoli obbligatori di una sola tesi. La 00 valuta soprattutto la *fedeltà degli strumenti*; la 01 un possibile *shortcut del protocollo*; la 02 l'*uso causale della voce* codificata in token; la 03 la *selettività per item* della fusione testo–voce–volto. Nelle 02 e 03 il modello principale resta un **LLM testuale** che legge rappresentazioni multimodali strutturate; una variante nativamente multimodale in 03 è facoltativa e richiede un audit diverso.
 
-**RQ1. Esiste un segnale predittivo testuale riproducibile?** Confrontare baseline lineari, encoder e decoder su `P-only`, con split per partecipante. Risponde se il problema è sufficientemente identificabile prima di interpretare il modello.
+## Modelli candidati per la proposta 00
 
-**RQ2. Quali feature e circuiti contribuiscono alla classe?** Leggere i concetti nei layer intermedi con Jacobian Lens e tracciare, con Circuit Tracer, il contrasto `logit(at_or_above_10) - logit(below_10)`. Risponde a *quale calcolo interno* sostiene la decisione.
+I cataloghi pubblici mostrano sia un Jacobian Lens pre-fittato sia transcoders utilizzabili da Circuit Tracer per i seguenti checkpoint sotto 3B. È una verifica di **disponibilità**, non ancora una prova che la pipeline funzioni sulle interviste o che il modello predica bene il PHQ-8.
 
-**RQ3. Le feature trovate sono causalmente rilevanti?** Ablation e patching devono produrre un `delta-logit` selettivo, maggiore di feature di controllo. Risponde se il grafo è una spiegazione fedele oppure una sola attribuzione correlazionale.
+| Priorità | Checkpoint | Perché considerarlo | Verifica ancora necessaria |
+| --- | --- | --- | --- |
+| 1 | [Gemma 2 2B base](https://huggingface.co/google/gemma-2-2b) | [Lens pubblicato](https://huggingface.co/neuronpedia/jacobian-lens/tree/main/gemma-2-2b), [transcoders](https://huggingface.co/mntss/gemma-scope-transcoders) e [demo di tracing/intervento](https://github.com/decoderesearch/circuit-tracer); è la scelta iniziale più documentata | accesso alla licenza Gemma, identità dei pesi/tokenizer, output di classe e fedeltà del replacement model |
+| 2 | [Qwen3 1.7B](https://huggingface.co/Qwen/Qwen3-1.7B) | [Lens pubblicato](https://huggingface.co/neuronpedia/jacobian-lens/tree/main/qwen3-1.7b) e [PLT pubblicati](https://huggingface.co/mwhanna/qwen3-1.7b-transcoders-lowl0); candidato a replica fra architetture | compatibilità effettiva del backend e costo del tracing sui prompt scelti |
+| 3 | [Gemma 3 1B base](https://huggingface.co/google/gemma-3-1b-pt) | [Lens pubblicato](https://huggingface.co/neuronpedia/jacobian-lens/tree/main/gemma-3-1b) e [transcoders GemmaScope 2](https://huggingface.co/collections/mwhanna/gemma-scope-2-transcoders-circuit-tracer); più leggero | Circuit Tracer richiede `nnsight`, descritto come sperimentale; verificare capacità predittiva, probabilmente più fragile |
 
-Metriche: balanced accuracy, macro-F1, AUROC/AUPRC, MAE/RMSE per lo score continuo, overlap di feature/edge, `delta-logit`, class flip rate e intervalli bootstrap.
+[Gemma 2 2B-IT](https://huggingface.co/google/gemma-2-2b-it) ha un [Lens dedicato](https://huggingface.co/neuronpedia/jacobian-lens/tree/main/gemma-2-2b-it) e una demo di Circuit Tracer, ma quest'ultima riusa transcoders del modello base: trattarlo come **variante da validare**, non come equivalente già dimostrato. Gemma 3 1B-IT dispone invece di [Lens](https://huggingface.co/neuronpedia/jacobian-lens/tree/main/gemma-3-1b-it) e [transcoders IT](https://huggingface.co/collections/mwhanna/gemma-scope-2-transcoders-circuit-tracer), con la stessa cautela sul backend `nnsight`. L'elenco e le limitazioni dei backend provengono dalla [documentazione di Circuit Tracer](https://github.com/decoderesearch/circuit-tracer); l'[implementazione di riferimento del Jacobian Lens](https://github.com/anthropics/jacobian-lens) permette anche di rifittare un Lens, ma ciò aumenta il lavoro sperimentale.
 
-## RQ della tesi 2 — Shortcut della struttura d'intervista
+**Raccomandazione operativa:** provare per primo Gemma 2 2B base su pochi prompt brevi; passare a Qwen3 1.7B solo dopo un test completo di Lens, grafo e patching. Un modello instruction-tuned può classificare meglio, ma ogni adattamento o LoRA cambia il checkpoint e impone di ricontrollare Lens e transcoders. Nessuna di queste risorse dimostra da sola accuratezza clinica.
 
-**RQ1. Quanto predicono separatamente risposta e domanda?** Confrontare `P-only`, `E-only`, `E+P` e risposte bilanciate per lunghezza/tipo di domanda. Risponde se il dataset introduce leakage dal protocollo.
+## Come scegliere fra le quattro
 
-**RQ2. La decisione resiste a trasformazioni semanticamente neutre?** Rimuovere o permutare la domanda, fare length matching e normalizzare filler/disfluenze. Risponde se il modello è stabile quando il contenuto del partecipante non cambia.
-
-**RQ3. Esistono meccanismi distinti per semantica e protocollo?** Confrontare J-space, circuiti e risposta alle ablation nelle condizioni originali e controfattuali. Risponde se lo strumento individua davvero la scorciatoia.
-
-**RQ4. Il modello generalizza a famiglie di domande non viste?** Usare leave-question-family-out. Risponde se la performance deriva da regolarità generali o da una mappa domanda-label specifica.
-
-Metriche: differenze appaiate di macro-F1/AUROC, agreement, class flip rate, variazione del logit gap, divergenza Jensen-Shannon, overlap di circuiti e test di McNemar/bootstrap.
-
-## RQ della tesi 3 — Rappresentazioni dei domini PHQ-8
-
-**RQ1. Gli item PHQ-8 sono predicibili separatamente?** Formulare una predizione multi-task dello score totale e dei singoli item. Risponde se il target globale può essere decomposto in domini informativi.
-
-**RQ2. Le feature interne sono specifiche o generiche?** Separare feature associate a sonno, energia, umore e altri item da sentiment, negazione, lunghezza e stile. Risponde se il modello codifica concetti distinguibili oppure un unico segnale di distress.
-
-**RQ3. Le feature sono necessarie e sufficienti?** Testare ablation, insertion e patching su ciascun item. Risponde se una feature ha un effetto selettivo sulla predizione del dominio dichiarato.
-
-**RQ4. I metodi meccanicistici sono più fedeli delle spiegazioni post-hoc?** Confrontarli con saliency, attention e rationale testuali sotto lo stesso budget di intervento. Risponde quale spiegazione anticipa meglio l'effetto causale reale.
-
-Metriche: MAE/RMSE e Spearman per score, macro-F1 e quadratic weighted kappa per item, similarità delle direzioni, selettività degli interventi e accordo tra annotatori.
-
-## RQ della tesi 4 — Spiegazioni multimodali testo-voce
-
-**RQ1. L'audio aggiunge valore oltre al testo?** Confrontare transcript, COVAREP/formanti, embedding audio e fusione tardiva. Risponde se una componente multimodale è scientificamente giustificata.
-
-**RQ2. Quale modalità guida la decisione?** Rimuovere testo/audio o sostituirne rappresentazioni fra esempi matched. Risponde se esiste complementarità, dominanza o leakage di una modalità.
-
-**RQ3. L'interazione testo-voce è spiegabile causalmente?** Usare token acustici interpretabili nel decoder, oppure un piccolo modello di fusione, e applicare ablation/patching. Risponde a come il modello combina contenuto linguistico e proxy prosodici.
-
-Metriche: guadagno della fusione rispetto al migliore unimodale, `delta-logit` per modality ablation, calibrazione, conditional permutation importance e intervalli bootstrap per partecipante.
-
-## RQ della tesi 5 — Stabilità sotto shift
-
-**RQ1. Prestazione e calibrazione degradano sotto shift?** Addestrare/calibrare su un sottogruppo o dominio e testare su un altro. Risponde se il comportamento è trasferibile, non solo accurato in-distribution.
-
-**RQ2. I concetti J-space si trasferiscono?** Confrontare DAIC con una versione social-media controllata per keyword/community, oppure con sottogruppi e famiglie di domande DAIC. Risponde se le feature semantiche sopravvivono quando cambia la fonte del testo.
-
-**RQ3. I circuiti causali vengono riusati?** Selezionare feature sul dominio sorgente e misurare l'effetto delle ablation sul dominio target. Risponde se la spiegazione è stabile oppure locale al dataset.
-
-**RQ4. Possiamo separare shortcut di intervista e shortcut di community?** Permutare/rimuovere la domanda su DAIC e mascherare auto-diagnosi o riferimenti di community sul dominio esterno. Risponde quale artefatto produce il cambiamento della decisione.
-
-Metriche: generalization gap, Brier/ECE, risk-coverage curve, overlap di feature/edge, selettività cross-domain e intervalli bootstrap gerarchici. I label social non vanno mai trattati come equivalenti a una diagnosi o al PHQ-8.
-
-## Vincoli metodologici comuni
-
-1. Split, soglie, metriche primarie e controlli devono essere fissati prima dell'analisi interpretativa.
-2. L'unità statistica è la sessione/partecipante; il PHQ-8 non assegna un label clinico a ogni turno.
-3. Il backbone resta inizialmente congelato: un LoRA può invalidare lens e transcoders adattati al checkpoint base.
-4. Ogni feature/circuito deve essere testato con interventi, controlli abbinati e replica su esempi/split; un grafo attraente non dimostra causalità.
-5. Non pubblicare trascrizioni, audio, ID o esempi riconoscibili; riportare risultati aggregati e failure table.
-
-## Perimetro consigliato
-
-La scelta più realistica è la **tesi 2**, con la tesi 1 come metodo: audit meccanicistico del contributo di contenuto, domanda e lunghezza in un predittore PHQ-8 basato sulle sole trascrizioni. La tesi 5 diventa il capitolo conclusivo di robustezza, prima tra famiglie di domanda e sottogruppi DAIC; un'estensione Reddit/SWMH è facoltativa e non necessaria per completare la tesi.
-
-La formulazione iniziale può essere:
-
-> *Can mechanistic interventions distinguish symptom-relevant evidence from interview-structure shortcuts in a small language model that estimates PHQ-8 severity from DAIC transcripts?*
-
-## Piano di lavoro
-
-| Fase | Risultato atteso | Stato |
+| Se l'interesse principale è… | Prima scelta | Condizione di avvio |
 | --- | --- | --- |
-| Scelta del perimetro | Una tesi, RQ, target e criteri di successo selezionati | Da definire |
-| Dati e protocollo | Asset disponibili, split per partecipante, controlli ed etica | Da definire |
-| Baseline | TF-IDF/lineare, encoder e decoder piccolo valutati | Da definire |
-| Audit meccanicistico | J-space, circuiti, ablation e patching con controlli | Da definire |
-| Robustezza | Controfattuali, stabilità per split/domanda/sottogruppo | Da definire |
-| Scrittura e replica | Artefatti riproducibili, tabelle, figure e discussione dei limiti | Da definire |
+| confrontare rigorosamente due metodi meccanicistici e costruire un protocollo estendibile al dottorato | **00** | gate tecnico sullo stesso checkpoint e target predittivo credibile |
+| capire se un LLM sfrutta una scorciatoia dell'intervista | **01** | dipendenza comportamentale riproducibile da prompt/struttura; senza di essa la parte circuitale non è giustificata |
+| studiare l'integrazione voce–testo con interventi relativamente chiari | **02** | accesso all'audio, qualità dell'allineamento e baseline `text-only` solida |
+| studiare spiegazioni multimodali fini, una per item | **03** | score per item e segnali facciali/audio disponibili, con campione sufficiente per otto esiti; è la più ampia |
+
+Non esiste una graduatoria assoluta di fattibilità: **00** riduce il lavoro sui dati ma aumenta quello sugli strumenti; **02** ha interventi naturali ma dipende dall'audio; **01** ha un gate empirico sullo shortcut; **03** concentra il maggior numero di modalità e target. Per una magistrale conviene definire un esperimento minimo indipendente per ogni opzione e lasciare le repliche a un possibile dottorato.
+
+## Protocollo comune di qualità
+
+1. **Dati e accessi.** Verificare licenza e asset realmente disponibili di DAIC-WOZ/E-DAIC prima di fissare il disegno. DAIC-WOZ ed E-DAIC possono contenere sessioni sovrapposte: non sono automaticamente due test indipendenti.
+2. **Unità di analisi.** Fissare split per partecipante prima di creare finestre o turni. Il target PHQ-8 è session-level; modificare un turno per un test controfattuale non crea una nuova label clinica.
+3. **Baseline.** Confrontare sempre il piccolo LLM con TF-IDF + classificatore lineare e una baseline encoder o di fusione semplice pertinente alla proposta. Riportare balanced accuracy, macro-F1, AUROC/AUPRC e calibrazione, con incertezza per partecipante.
+4. **Input e lunghezza.** Definire una regola di segmentazione/aggregazione sul development: le interviste possono superare la finestra utile del modello. Evitare che troncamento, numero di turni o token di qualità diventino spiegazioni spurie.
+5. **Spiegazioni e interventi.** Prespecificare target, budget, controlli matched e metrica primaria. Valutare i metodi sul **cambiamento osservato** nel modello originale; saliency, Lens e grafi restano ipotesi finché non anticipano interventi controllati.
+6. **Risultati nulli.** Riportare anche quando il modello non supera le baseline, la modalità non aggiunge valore, lo shortcut non si manifesta o gli strumenti non superano il random. Ogni esito limita il claim ma può rispondere a una RQ.
+7. **Privacy e interpretazione.** Pubblicare solo codice, protocolli e statistiche aggregate autorizzate. Nessun transcript, audio, frame, ID o esempio riconoscibile; niente indicazioni diagnostiche individuali.
+
+## Piano di lavoro decisionale
+
+| Fase | Deliverable | Decisione |
+| --- | --- | --- |
+| 1. Scelta e accessi | una proposta primaria, asset del corpus, licenze, capacità GPU e target definiti | confermare o ridurre il perimetro |
+| 2. Pilota predittivo | split per partecipante, baseline semplici, un piccolo LLM e intervalli di incertezza | esiste un comportamento abbastanza solido da auditare? |
+| 3. Gate specifico | 00: compatibilità Lens/Tracer; 01: shortcut comportamentale; 02: landmark/allineamento; 03: score per item e qualità multimodale | procedere, cambiare variante o fermarsi al risultato pilota |
+| 4. Audit preregistrato | coppie controfattuali, ranking delle spiegazioni, patching/mascheramenti e controlli | le spiegazioni anticipano effetti selettivi? |
+| 5. Robustezza e scrittura | bootstrap per partecipante, failure cases anonimizzati, limiti e protocollo riproducibile | claim finale proporzionato all'evidenza |
 
 ## Prossimo passo
 
-Scegliere una delle cinque tesi, fissare target e RQ primarie, quindi registrare il primo avanzamento nel [diario delle settimane]({{ '/settimane/' | relative_url }}).
+Scegliere la proposta primaria con un pilota breve, non sulla sola promessa teorica: verificare prima dati, checkpoint e un intervento rappresentativo. Registrare la scelta e i risultati nel [diario delle settimane]({{ '/settimane/' | relative_url }}).
