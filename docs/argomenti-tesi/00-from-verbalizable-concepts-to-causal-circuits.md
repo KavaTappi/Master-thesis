@@ -1,181 +1,146 @@
-# 00 — From verbalizable concepts to causal circuits: evaluating Jacobian Lens explanations in small language models for PHQ-8 estimation
+# 00 — From verbalizable concepts to causal sites: evaluating Jacobian Lens explanations in small language models
 
-## Proposta di tesi
+## Idea e perimetro
 
-### Idea in breve
+La tesi valuta se il **Jacobian Lens** (J-Lens) individui posizioni e layer le cui attivazioni influenzano davvero una decisione di un piccolo LLM. Il test causale principale è l'**activation patching** sul modello originale. **Logit Lens** e siti casuali comparabili sono le baseline. Circuit Tracer è una possibile estensione qualitativa, successiva ai risultati principali.
 
-La tesi valuta se i concetti resi leggibili dal **Jacobian Lens** durante una stima sperimentale del PHQ-8 corrispondano a parti del calcolo che influenzano davvero la decisione di un piccolo modello linguistico. **Circuit Tracer** fornisce una seconda vista, basata su feature e percorsi di attribuzione. Interventi sulle attivazioni del modello verificano le previsioni formulate dalle due viste.
+Il progetto ha due livelli:
 
-Il caso di studio è un modello open-weight entro 3B parametri che riceve i turni testuali di un partecipante a un'intervista DAIC/E-DAIC e sceglie tra `A = PHQ-8 < 10` e `B = PHQ-8 >= 10`. Il PHQ-8 è il punteggio self-report associato all'intera sessione. Il modello non diagnostica una persona e la tesi non attribuisce un item clinico a un singolo turno.
+1. **Livello A, obbligatorio e controllato:** coppie di brevi enunciati costruite attorno agli **otto domini tematici del PHQ-8**. Il compito riguarda ciò che è espresso nel testo, non il punteggio di un questionario.
+2. **Livello B, applicativo e condizionale:** stima binaria del punteggio PHQ-8 a livello di intervista DAIC-WOZ/E-DAIC, solo se il modello congelato mostra prestazioni sufficienti e i dati sono accessibili.
 
-> **Domanda centrale:** quando il Jacobian Lens rende leggibile un concetto durante la predizione, quel concetto aiuta a individuare componenti o posizioni il cui intervento cambia causalmente il logit di screening? La convergenza con Circuit Tracer migliora questa capacità rispetto ai due metodi separati?
+> **Domanda centrale:** una lettura J-Lens relativa a un dominio del PHQ-8 aiuta a scegliere siti `layer × posizione` il cui patching modifica la risposta del modello più di Logit Lens e di siti casuali, a parità di intervento?
 
-La risposta può essere negativa: un concetto verbalizzabile può essere presente nelle attivazioni, ma non contribuire al target PHQ-8. Anche un grafo di attribuzione può non prevedere l'effetto di un intervento sul modello originale. La tesi quantifica proprio queste possibilità.
+## Perché usare i singoli punti del PHQ-8 nel Livello A
 
-## 1. Obiettivi, uno per uno
+È una scelta utile: collega il benchmark controllato all'applicazione futura e permette di verificare se il metodo funziona in domini semanticamente diversi. Gli otto domini sono interesse/piacere, umore, sonno, energia, appetito, autovalutazione, concentrazione e rallentamento/agitazione.
 
-1. **Stabilire un compito predittivo credibile.** Verificare che il piccolo LLM produca una stima non banale su partecipanti non visti, rispetto a TF-IDF con regressione logistica e a un encoder testuale. La prestazione è un requisito per interpretare una decisione, non il contributo principale.
-2. **Misurare cosa legge il Jacobian Lens.** Registrare, per layer e posizione, score di concetti prespecificati come sonno, energia, interesse, negazione, contesto neutro e possibili proxy superficiali. Verificare se la lettura reagisce a variazioni semantiche controllate.
-3. **Costruire grafi del medesimo calcolo.** Applicare Circuit Tracer allo stesso checkpoint, agli stessi esempi e allo stesso contrasto di output `g(x) = z_B(x) - z_A(x)`; identificare feature, percorsi ed eventuali error nodes che contribuiscono alla predizione.
-4. **Definire una corrispondenza verificabile.** Cercare convergenza tra le due viste a livello di *layer, posizione e direzione prevista dell'effetto*, senza equiparare automaticamente un token leggibile nel J-space a una feature del transcoder.
-5. **Validare le ipotesi con interventi.** Sostituire attivazioni fra coppie di input, ablare componenti candidate e, dove tecnicamente supportato, intervenire su direzioni del Lens e feature del grafo. Misurare l'effetto sul modello originale, non soltanto sul modello sostitutivo usato per il grafo.
-6. **Confrontare fedeltà e costo.** Valutare Jacobian Lens, Circuit Tracer, la loro selezione congiunta e baseline semplici a pari budget di siti o interventi. Documentare quando uno strumento aggiunge informazione all'altro e quando genera candidati fuorvianti.
+La distinzione decisiva è questa:
 
-## 2. Cosa aggiunge alla letteratura
+| Livello A | Livello B |
+| --- | --- |
+| Un enunciato sintetico **riporta**, **nega** o non chiarisce un contenuto relativo a un dominio? | Quale punteggio PHQ-8 self-report è associato all'intera sessione? |
+| Etichetta semantica costruita e controllata per l'esperimento | Etichetta raccolta dal questionario, tipicamente riferita alle ultime due settimane |
+| Una frase può bastare per valutare la comprensione del testo | Una frase non determina il punteggio 0–3 dell'item né il totale PHQ-8 |
 
-[Gurnee et al. (2026)](https://arxiv.org/abs/2607.15495) introducono il Jacobian Lens per leggere rappresentazioni verbalizzabili e ne testano proprietà funzionali. [Ameisen et al. (2025)](https://www.transformer-circuits.pub/2025/attribution-graphs/methods.html) introducono grafi di attribuzione di circuiti e procedure di verifica tramite interventi. Nessuno dei due risultati implica, da solo, che un concetto letto dal Lens durante un compito di classificazione sia una spiegazione causale *di quella classe* o che coincida con un nodo del grafo.
+Per esempio, `I keep waking up at night` contro `I sleep through the night` costituisce una coppia per il **dominio sonno**. Consente di chiedere se il modello distingua due resoconti testuali e quali attivazioni sostengano la differenza. Non consente di attribuire a una persona uno score PHQ-8 del sonno. Gli enunciati ambigui (`My schedule changed`) formano una categoria di controllo: non vengono forzati in un sì/no.
 
-Il gap proposto è **metodologico e operativo**: valutare sullo stesso piccolo modello e sullo stesso output se una lettura verbalizzabile anticipi gli effetti di interventi, se un grafo aggiunga capacità predittiva e se il loro accordo selezioni meglio i siti influenti. Il contesto PHQ-8 rende il test interessante perché molte parole plausibili possono comparire in un'intervista senza essere usate dal modello per decidere. Il contributo resta condizionato alla revisione bibliografica finale: la tesi non rivendica di essere la prima applicazione di ciascuno strumento.
+Esempi di **coppie illustrative**, da ampliare con parafrasi e revisione delle etichette:
 
-Risultati consegnabili:
-
-- un protocollo riproducibile di confronto fra lettura di concetti, attribuzione di circuiti e interventi causali;
-- un benchmark di coppie originali/controfattuali con unità statistica a livello di partecipante;
-- una valutazione quantitativa dei casi di accordo e disaccordo fra metodi, inclusi i risultati nulli;
-- criteri per capire quando un readout del Jacobian Lens è utile per selezionare un intervento e quando resta soltanto descrittivo.
-
-Questa proposta è diversa dalla **01**: la 01 chiede se un LLM sfrutti shortcut del protocollo d'intervista; qui l'oggetto principale è la **fedeltà dei metodi di interpretabilità**. Gli shortcut possono comparire come controllo o caso di errore, ma non sono una premessa per la tesi. È diversa dalla **03** perché usa testo e una classe session-level, senza introdurre voce, volto o otto output per item.
-
-## 3. Dataset e unità di analisi
-
-| Elemento | Scelta proposta | Motivo |
+| Dominio | Contenuto riferito | Contenuto esplicitamente assente |
 | --- | --- | --- |
-| Corpus principale | E-DAIC, se la release disponibile include transcript, score PHQ-8 e identificativi di sessione | offre più sessioni del sottoinsieme DAIC-WOZ e consente di mantenere il task testuale circoscritto |
-| Corpus di confrontabilità | DAIC-WOZ, solo sulle sessioni pertinenti e con identificativi allineati | è un sottoinsieme/precedente della famiglia E-DAIC, quindi non costituisce test esterno indipendente |
-| Input principale | soli turni del partecipante, con ordine preservato (`P-only`) | riduce il rischio che il segnale delle domande dell'intervistatore domini l'analisi dei concetti |
-| Label primario | `PHQ-8 < 10` oppure `PHQ-8 >= 10` a livello di sessione | permette un contrasto di logits definito prima di produrre le spiegazioni |
-| Unità statistica | partecipante/sessione | impedisce che frammenti della stessa persona entrino in train e test |
+| Interesse/piacere | `I used to enjoy painting, but I no longer look forward to it.` | `I still look forward to painting each weekend.` |
+| Umore | `I have felt down most mornings lately.` | `My mood has been steady lately.` |
+| Sonno | `I keep waking up during the night.` | `I usually sleep through the night.` |
+| Energia | `I run out of energy by midday.` | `I have felt energetic through the day.` |
+| Appetito | `Meals have stopped appealing to me.` | `My appetite has not changed.` |
+| Autovalutazione | `I keep thinking I have let everyone down.` | `I do not feel I have let anyone down.` |
+| Concentrazione | `I lose track of what I read after a few lines.` | `I can follow a book without losing track.` |
+| Rallentamento/agitazione | `Others have noticed that I move and speak more slowly.` | `Others say my usual pace has not changed.` |
 
-Gli [asset E-DAIC e il manuale del corpus](https://dcapswoz.ict.usc.edu/wwwedaic/E-DAIC%20Manual.pdf) vanno controllati all'inizio: disponibilità dei transcript, copertura delle label, split ufficiali e licenza d'uso. In assenza della release E-DAIC completa, DAIC-WOZ può diventare il corpus principale, dichiarando la minore numerosità. Nessuna trascrizione riconoscibile o ID di partecipante entra negli artefatti pubblici.
+Queste coppie controllano **l'informazione riportata**, non la frequenza richiesta per assegnare uno score 0–3. Per l'analisi finale servono esempi indiretti, negazioni, casi insufficienti e controlli di lunghezza: una sola frase per dominio non costituisce un benchmark.
 
-Lo split si fissa per partecipante prima di ogni segmentazione. Soglie, vocabolario dei concetti, controlli e budget di interventi si scelgono sul train/development. Il test resta chiuso fino alla valutazione finale. Le sessioni DAIC-WOZ presenti anche in E-DAIC non sono una replica indipendente.
+Si costruisce una piccola batteria bilanciata per **tutti e otto** i domini, così da misurare la copertura del metodo. Per il patching intensivo si prespecificano **tre domini** sul development (per esempio sonno, energia, interesse), prima di osservare gli effetti causali. La scelta è motivata da competenza del modello, varietà linguistica e fattibilità; i risultati degli altri cinque domini restano nel report comportamentale e J-Lens, senza rivendicare una valutazione causale completa per essi.
 
-## 4. Modello e verifica preliminare
+## Cosa aggiunge alla letteratura
 
-### Shortlist verificata sulle risorse pubbliche
+[Gurnee et al. (2026)](https://transformer-circuits.pub/2026/workspace/index.html) introducono il Jacobian Lens e verificano anche effetti causali di interventi sulle sue direzioni in vari compiti. La tesi non rivendica di scoprire che il J-space possa influenzare il comportamento. Chiede una cosa più circoscritta: **il readout osservato durante una decisione di classificazione predice quali siti del residual stream sono influenti per quella decisione?**
 
-| Checkpoint sotto 3B | Jacobian Lens pre-fittato | Circuit Tracer / transcoder | Decisione pratica |
-| --- | --- | --- | --- |
-| [Gemma 2 2B base](https://huggingface.co/google/gemma-2-2b) | [artefatto `gemma-2-2b`](https://huggingface.co/neuronpedia/jacobian-lens/tree/main/gemma-2-2b) | [PLT GemmaScope](https://huggingface.co/mntss/gemma-scope-transcoders) e [demo ufficiale](https://github.com/decoderesearch/circuit-tracer) | **prima scelta**: è l'incrocio meglio documentato, con tutorial eseguibile anche su GPU Colab da circa 15 GB per esempi piccoli; accesso ai pesi soggetto alla licenza Gemma |
-| [Gemma 2 2B instruction-tuned](https://huggingface.co/google/gemma-2-2b-it) | [artefatto `gemma-2-2b-it`](https://huggingface.co/neuronpedia/jacobian-lens/tree/main/gemma-2-2b-it) | [demo IT](https://github.com/decoderesearch/circuit-tracer), che però riusa transcoders del modello base | variante utile se il base non segue bene il prompt; **richiede** misurare l'errore del replacement model, non assumere equivalenza base/IT |
-| [Qwen3 1.7B](https://huggingface.co/Qwen/Qwen3-1.7B) | [artefatto `qwen3-1.7b`](https://huggingface.co/neuronpedia/jacobian-lens/tree/main/qwen3-1.7b) | [PLT Qwen3 1.7B](https://huggingface.co/mwhanna/qwen3-1.7b-transcoders-lowl0) elencati dalla [libreria Circuit Tracer](https://github.com/decoderesearch/circuit-tracer) | seconda scelta o replica architetturale; verificare backend, tracing del target e costo prima di includerlo nella tesi |
-| [Gemma 3 1B base](https://huggingface.co/google/gemma-3-1b-pt) / [IT](https://huggingface.co/google/gemma-3-1b-it) | [base](https://huggingface.co/neuronpedia/jacobian-lens/tree/main/gemma-3-1b) / [IT](https://huggingface.co/neuronpedia/jacobian-lens/tree/main/gemma-3-1b-it) | [PLT base e IT](https://huggingface.co/collections/mwhanna/gemma-scope-2-transcoders-circuit-tracer) | opzione più leggera, ma Circuit Tracer richiede il backend `nnsight`, dichiarato ancora sperimentale: non è la prima scelta per il confronto causale |
+La novità potenziale è un protocollo quantitativo, su un checkpoint piccolo e congelato, che confronta tre *selettori degli stessi siti* (J-Lens, Logit Lens, casuale) e verifica tutti con **il medesimo patching**. Il benchmark a coppie per gli otto domini rende misurabili successi, falsi positivi, negazioni, parafrasi e assenza di informazione. L'applicazione session-level, quando possibile, verifica se il risultato si trasferisce a una decisione più difficile. La priorità e l'eventuale novità rispetto a lavori pubblicati dopo la stesura richiedono una revisione bibliografica finale.
 
-Questa è **compatibilità documentale degli artefatti**, non una prova end-to-end già eseguita sui transcript DAIC. Altre taglie presenti nei cataloghi, come Gemma 3 270M, possono servire per smoke test ma sono troppo deboli come scelta primaria per lo screening. Llama 3.2 1B ha una demo Circuit Tracer, ma non compare nella raccolta consultata di Lens pre-fittati: richiederebbe il fitting del Lens e non è quindi una scorciatoia di fattibilità.
+Un readout semanticamente plausibile può risultare **descrittivo**: il modello rende leggibile `sleep`, ma l'intervento sul sito non modifica la risposta. Anche questo è un risultato della tesi.
 
-La scelta raccomandata è partire da **Gemma 2 2B base**, congelato. Prima degli esperimenti bisogna verificare che *entrambi* gli strumenti funzionino sullo **stesso ID di checkpoint, revisione dei pesi, tokenizer e configurazione**. La presenza di file per una famiglia non basta. Qwen3 1.7B è la replica opzionale più interessante se supera lo stesso gate; Gemma 2 2B-IT è un'alternativa distinta, non un sostituto trasparente del base.
+## Disegno del Livello A
 
-Si parte dal backbone congelato, con prompt di classificazione fisso e due etichette a singolo token verificate nel tokenizer. Si riportano balanced accuracy, macro-F1, AUROC/AUPRC e calibrazione, con intervalli per partecipante. Se il modello non mostra una competenza sufficiente a rendere interessante la decisione, si può provare un diverso prompt o un altro checkpoint **prima** di aprire il test. Un LoRA è possibile solo come variante separata: modifica il checkpoint e richiede di rivalidare o rifittare Lens e transcoders. Non si trasferiscono automaticamente i risultati del modello base al modello adattato.
+### Dati e coppie
 
-Il Lens legge token del vocabolario: per concetti composti da più token si prespecifica un piccolo insieme di verbalizzazioni e una regola di aggregazione. Si controlla che le differenze osservate non dipendano solo dal numero di token o dalla scelta di una parola particolarmente favorevole.
+- Testi sintetici o autorizzati e de-identificati, scritti in inglese come il corpus applicativo.
+- Per ciascun dominio: esempi di presenza riferita, negazione esplicita e informazione insufficiente; coppie con una variazione semantica circoscritta.
+- Parafrasi che preservano il significato, esempi indiretti senza la parola canonica del dominio e sostituzioni neutre di lunghezza/tokenizzazione simili.
+- Split per **template e fonte di generazione**, prima di produrre varianti, così che un template quasi identico non finisca in train e test.
+- Revisione umana cieca alle predizioni su un campione: l'etichetta semantica deve essere abbastanza chiara da costituire un riferimento credibile.
 
-Una piccola batteria di esempi semantici controllati, indipendente dalle label PHQ-8, verifica preliminarmente che il Lens e il protocollo di patching reagiscano a fenomeni semplici, per esempio `I sleep well` rispetto a `I cannot sleep`. Questa è una prova tecnica del metodo, non un campione aggiuntivo per la metrica clinica.
+I prompt restano identici salvo l'enunciato modificato. Le due etichette di risposta, per esempio `A = contenuto riferito` e `B = contenuto negato`, devono essere tokenizzate in modo verificato. I casi insufficienti vengono valutati separatamente con una terza risposta o un'analisi di astensione; non vengono usati come source/target del patching binario.
 
-## 5. Domande di ricerca
+Per limitare il semplice eco lessicale, il punteggio primario del J-Lens è letto in **posizioni successive all'enunciato**, fissate in anticipo. Si confrontano i readout delle due versioni della coppia; il nome del dominio presente nell'istruzione non costituisce da solo evidenza. Le formulazioni indirette e i controlli di negazione misurano la capacità del readout di andare oltre la parola letterale.
 
-### RQ0 — Esiste un comportamento da spiegare?
-
-Il piccolo LLM mantiene una prestazione e una calibrazione non banali sul target session-level rispetto alle baseline, e il contrasto `g(x)` varia in modo interpretabile su coppie semantiche controllate? Se no, i claim sul suo meccanismo PHQ-8 vanno ridimensionati.
-
-### RQ1 — I concetti del Jacobian Lens sono sensibili e specifici?
-
-Quando si modifica un'informazione del partecipante preservando il resto del prompt, cambiano i readout attesi nei layer e nelle posizioni pertinenti? Per esempio, una negazione controllata cambia la lettura di `sleep`/`cannot sleep` più di una parafrasi neutra di lunghezza simile? Il test misura il comportamento del *readout*, non conferma che quel turno contenga un sintomo clinico.
-
-### RQ2 — Jacobian Lens e Circuit Tracer convergono sul medesimo effetto?
-
-Per lo stesso esempio, target e checkpoint, i siti che il Lens considera informativi sono anche quelli in cui il grafo assegna un contributo al logit gap? La corrispondenza viene verificata per layer, posizione, segno atteso e gruppo semantico, annotando i gruppi senza consultare l'esito dell'intervento. È possibile che i metodi descrivano aspetti diversi dello stesso calcolo: il disaccordo è un risultato da spiegare.
-
-### RQ3 — Quale metodo anticipa meglio l'effetto causale?
-
-Su un insieme di interventi fissato in anticipo, quale ranking predice meglio il cambiamento reale di `g(x)` dopo activation patching o ablation? Il confronto primario valuta gli **stessi siti layer × posizione**: si aggregano gli score del Lens e quelli del grafo su tali siti, poi si esegue lo stesso patching per i siti selezionati da ogni metodo. Questo evita di confrontare impropriamente l'ablation di una feature con la sostituzione di un intero residual stream. Gli interventi specifici sulle feature del grafo o sulle direzioni J-space sono analisi secondarie, con costi ed effetti riportati separatamente.
-
-### RQ4 — L'accordo fra i metodi aggiunge valore?
-
-Selezionare siti proposti da entrambi produce una migliore precisione nella scoperta di effetti reali rispetto al Lens o al grafo da soli, allo stesso numero di siti? L'accordo migliora anche la stabilità fra parafrasi, seed, split e sottogruppi di esempi? Una selezione congiunta può essere più precisa ma coprire meno casi; occorre riportare entrambe le quantità.
-
-## 6. Metodo sperimentale, passo per passo
-
-| Fase | Operazione | Evidenza prodotta |
-| --- | --- | --- |
-| 0. Pre-registrazione interna | fissare prompt, target `g`, split, concetti, top-k, controlli e metriche sul development | evita di scegliere spiegazioni dopo aver visto gli effetti sul test |
-| 1. Baseline | valutare TF-IDF/lineare, encoder testuale e piccolo LLM su input `P-only` | determina se l'oggetto dell'audit è credibile |
-| 2. Coppie controllate | parafrasi che conservano il contenuto; negazione o cambio semantico limitato; sostituzione di dettagli neutri; controlli di lunghezza/tokenizzazione | separa sensibilità semantica da effetto di forma e lunghezza |
-| 3. Jacobian Lens | leggere score per concetti prespecificati su layer e posizioni del partecipante; confrontare originale e controfattuale | mappe di contenuto verbalizzabile e ranking dei siti |
-| 4. Circuit Tracer | produrre grafi per `g(x)` sugli stessi esempi; salvare grafo completo, pruning, feature ed error nodes | ranking dei siti e candidati di percorso verso la classe |
-| 5. Patching comune | sostituire attivazioni degli stessi siti layer × posizione tra coppie originali/controfattuali; testare siti scelti da Lens, grafo, accordo e controlli | effetto causale comparabile sul modello originale |
-| 6. Interventi mirati | ablare/patchare feature del grafo e, se supportato, scambiare direzioni J-space; usare controlli matched per layer, norma e ampiezza | verifica più fine della spiegazione di ciascun metodo |
-| 7. Statistica e robustezza | bootstrap appaiato per partecipante, test di permutazione, analisi per seed e per forza dell'effetto; report dei casi nulli | incertezza e limiti di generalizzazione |
-
-Le modifiche testuali a un'intervista reale sono **interventi sul modello**, non nuovi casi clinici. Le negazioni non preservano la label self-report; perciò si usano per verificare sensibilità e direzione delle spiegazioni, non per calcolare l'accuratezza rispetto al label originale.
-
-Se il backend dei grafi non consente di tracciare direttamente `z_B - z_A`, si tracciano i due logits separatamente e si compone il contrasto solo dopo avere verificato che i grafi e le attribuzioni siano confrontabili. Questo dettaglio viene fissato nel gate tecnico, prima di analizzare il test.
-
-## 7. Come misurare la fedeltà
-
-La quantità primaria è il contrasto fra i due token di classe:
+### Un esperimento esemplificativo
 
 ```text
-g(x) = z_B(x) - z_A(x)
-effect(s, x, x') = g(x con attivazione del sito s presa da x') - g(x)
+Dominio: sonno
+x:  For several nights, I have been awake for hours after going to bed.
+x': For several nights, I have fallen asleep soon after going to bed.
+
+Task: in questo resoconto è riferita una difficoltà del sonno?
 ```
 
-| Misura | Significato |
-| --- | --- |
-| `effect@k` | effetto assoluto medio intervenendo sui primi `k` siti selezionati; sempre affiancato dal segno atteso e osservato |
-| `direction accuracy` | quota di interventi il cui effetto ha il segno previsto dal metodo |
-| `rank–effect association` | quanto il ranking predice l'ampiezza dell'effetto misurato su un pannello di siti prespecificato |
-| `random-gap@k` | vantaggio rispetto a siti casuali matched per layer, posizione e ampiezza dell'intervento |
-| `joint gain@k` | vantaggio della selezione congiunta rispetto al migliore metodo singolo a pari `k` |
-| `coverage` | quota di esempi per cui un metodo trova candidati valutabili; evita di riportare solo casi favorevoli |
-| `collateral effect` | variazione su prompt linguistici di controllo, per individuare interventi che danneggiano genericamente il modello |
+Il modello produce un contrasto di output `g(x) = z_A(x) - z_B(x)`. Se il J-Lens legge, in un certo sito, token preregistrati come `insomnia` o `awake` in `x` più che in `x'`, quel sito diventa candidato. L'ipotesi direzionale è che sostituire l'attivazione di `x` con quella di `x'` **riduca** `g(x)`.
 
-Si riportano anche correlazione fra score e effetto, class flip, stabilità delle classifiche e intervalli di confidenza. Un cambio del logit causato da un intervento interno prova un effetto nel modello e nell'intervento scelti; non dimostra da solo che il concetto umano attribuito alla componente sia la descrizione corretta del meccanismo.
+Prima del patch si controlla che il modello risponda correttamente a entrambe le versioni e che la tokenizzazione permetta di allineare le posizioni scelte. Si usano principalmente posizioni ancora confrontabili dopo il testo, come il delimitatore finale; per interventi su span interni serve una mappa esplicita delle posizioni corrispondenti. Le coppie non allineabili non vengono forzate in un confronto token per token.
 
-## 8. Controlli essenziali e rischi
+## Domande di ricerca
 
-- **Confronto equo:** ranking e patching primari usano gli stessi siti, le stesse coppie e lo stesso budget; confronto feature-level e J-space directional restano distinti.
-- **Selezione circolare:** concetti, soglie e criteri di accordo sono definiti senza guardare gli effetti finali; annotatori eventualmente ciechi ai label e agli score di patching.
-- **Prompt e label:** etichette `A/B` a singolo token, template invariato, controllo di tokenizzazione; il label PHQ-8 non entra mai nel testo di input.
-- **Ricostruzione del grafo:** misurare error nodes, fedeltà del replacement model e sensibilità al pruning. Un grafo poco fedele limita qualunque conclusione sulla sua convergenza con il Lens.
-- **Validità del Lens:** confrontare il suo readout con Logit Lens e controlli semantici; su checkpoint adattato non riusare un lens pre-fittato senza verifica.
-- **Potenza statistica:** corpus piccolo e classe sbilanciata; usare bootstrap per partecipante, pochi concetti preregistrati e nessuna ricerca post-hoc del migliore caso.
-- **Interpretazione sanitaria:** risultati aggregati sul comportamento del modello; nessun claim su sintomi osservati in un turno o diagnosi individuali.
+1. **RQ1 — Lettura semantica.** Il J-Lens varia con presenza, negazione e parafrasi nei domini PHQ-8 più di quanto faccia su modifiche neutre? Quanti domini supera, con criteri fissati prima dell'analisi?
+2. **RQ2 — Fedeltà causale.** I siti selezionati dal J-Lens producono, dopo lo stesso activation patching, effetti più grandi e con segno più spesso corretto rispetto a siti casuali comparabili?
+3. **RQ3 — Valore rispetto a Logit Lens.** Il J-Lens migliora la selezione rispetto al Logit Lens agli stessi layer, posizioni, esempi e budget `k`?
+4. **RQ4 — Trasferimento.** Se il modello supera un gate predittivo su interviste reali, il metodo conserva parte della sua utilità nella stima binaria del PHQ-8 session-level?
 
-## 9. Stack e fattibilità
+RQ1–RQ3 costituiscono la tesi completa. RQ4 è un'estensione applicativa con un esito anche negativo, non una condizione necessaria per consegnare il lavoro.
 
-| Funzione | Strumenti proposti |
-| --- | --- |
-| Dati e baseline | Python, `pandas`, scikit-learn, PyTorch, Hugging Face Transformers |
-| Lettura delle attivazioni | implementazione Jacobian Lens verificata sul checkpoint scelto; Logit Lens come baseline |
-| Grafi | libreria pubblica `circuit-tracer`, transcoders compatibili e salvataggio dei grafi non potati |
-| Interventi | hook PyTorch/TransformerLens o backend documentato; activation patching e ablation sul modello originale |
-| Baseline XAI | gradient saliency/integrated gradients e leave-one-span-out per l'input; random matched per i siti interni |
-| Analisi | bootstrap appaiato, test di permutazione, notebook e configurazioni versionati; tabelle di effetti e failure cases anonimizzati |
+## Pipeline minima di explainability
 
-**Esperimento minimo per una magistrale:** un checkpoint <=3B, una condizione testuale `P-only`, un target binario, 3–4 gruppi di concetti definiti prima dell'analisi, un numero limitato di coppie controfattuali bilanciate, Jacobian Lens, Circuit Tracer, patching comune su siti layer × posizione, baseline Logit Lens e random matched. Una seconda architettura, item PHQ-8, audio e nuovo corpus indipendente sono estensioni.
+| Passo | Operazione | Output |
+| --- | --- | --- |
+| 1. Competenza | Valutare il modello congelato sulle coppie e sui template tenuti fuori, separatamente per dominio | accuratezza/coverage del task semantico; esempi idonei all'audit |
+| 2. Readout | Registrare score/rank J-Lens e Logit Lens per concetti preregistrati, ai layer e nelle posizioni ammissibili | ranking di siti `layer × posizione` per ciascuna coppia |
+| 3. Ipotesi | Selezionare top-`k` e segno previsto senza guardare il patching | lista bloccata di interventi |
+| 4. Intervento | Sostituire nel modello originale l'attivazione del sito di `x` con quella di `x'`; ripetere in direzione inversa | cambiamento del logit gap e della classe |
+| 5. Controlli | Siti random matched per layer/posizione e ampiezza della differenza fra attivazioni; modifiche testuali neutre | effetto specifico rispetto al rumore e al danno generico |
+| 6. Report | Effetto per dominio, robustezza a parafrasi, costi, risultati nulli e intervalli | valutazione della fedeltà e della copertura |
 
-**Gate tecnico iniziale:** entro le prime settimane verificare con pochi esempi che (a) il checkpoint predica il target meglio del caso e delle baseline più semplici in modo non trascurabile, (b) Lens e transcoders sono utilizzabili sullo *stesso* checkpoint, (c) il replacement model riproduce sufficientemente il logit gap del modello originale e (d) il patching restituisce effetti riproducibili. Se uno di questi punti fallisce, adattare checkpoint o perimetro prima di investire nell'analisi completa.
+La quantità primaria è:
 
-## 10. Interpretazione degli esiti
+```text
+g(x) = z_A(x) - z_B(x)
+effect(s, x, x') = g(x con h_s presa da x') - g(x)
+```
 
-| Esito | Conclusione consentita |
-| --- | --- |
-| Lens, grafo e interventi concordano | in questo modello e task, il readout verbalizzabile aiuta a trovare siti causalmente influenti sulla predizione |
-| Il grafo predice gli effetti, il Lens no | alcuni concetti leggibili non sono buoni selettori di siti causali per questo target |
-| Il Lens predice gli effetti, il grafo no | il readout è utile nel setup, mentre la particolare decomposizione/pruning del grafo è insufficiente |
-| La selezione congiunta è più precisa ma copre pochi esempi | l'accordo è un filtro selettivo, da riportare insieme alla sua copertura |
-| Nessuno supera random e baseline | i metodi studiati non forniscono evidenza di spiegazioni causali fedeli nel setup; la prestazione del modello resta una questione separata |
-| Il modello non supera il gate predittivo o tecnico | limitare il claim al benchmark metodologico controllato e non attribuire meccanismi a una stima PHQ-8 non affidabile |
+Si riportano `effect@k`, accuratezza del segno, associazione fra rank e ampiezza dell'effetto, class flip e copertura. I confronti J-Lens/Logit Lens/random usano **gli stessi esempi e lo stesso patching**. L'ampiezza di un effetto su un intero residual stream non dimostra da sola che il token leggibile sia la descrizione esatta della causa: il patch sostituisce più informazione di quella rappresentata dal singolo token J-Lens.
 
-## 11. Sviluppo possibile per un dottorato
+## Modelli adatti
 
-La tesi può produrre un **protocollo di valutazione** trasferibile. Un dottorato potrebbe applicarlo a modelli audio-testo nativi, confrontare le direzioni verbalizzabili con rappresentazioni che non lo sono, sviluppare metriche di fedeltà stabili fra architetture e testare spiegazioni sotto shift di popolazione o qualità del segnale. Ogni estensione richiede nuovi interventi e una verifica dell'accesso ai componenti interni; i circuiti trovati nel piccolo LLM testuale non si trasferiscono automaticamente.
+| Priorità | Checkpoint | Uso e cautela |
+| --- | --- | --- |
+| 1 | [Gemma 2 2B base](https://huggingface.co/google/gemma-2-2b) + [Lens pre-fittato](https://huggingface.co/neuronpedia/jacobian-lens/tree/main/gemma-2-2b) | prima scelta per il nucleo congelato; verificare checkpoint, tokenizer, indici dei layer, accesso alla licenza e qualità del Lens sui prompt scelti |
+| 2 | [Gemma 2 2B IT](https://huggingface.co/google/gemma-2-2b-it) + [Lens IT](https://huggingface.co/neuronpedia/jacobian-lens/tree/main/gemma-2-2b-it) | fallback se il base non segue stabilmente il formato di risposta; è un modello distinto da valutare dall'inizio |
+| 3 | [Gemma 3 1B base](https://huggingface.co/google/gemma-3-1b-pt) + [Lens pre-fittato](https://huggingface.co/neuronpedia/jacobian-lens/tree/main/gemma-3-1b) | opzione più leggera, utile per un pilota; confermare che distingua le coppie nei domini prescelti |
+| 4 | [Qwen3 1.7B](https://huggingface.co/Qwen/Qwen3-1.7B) + [Lens pre-fittato](https://huggingface.co/neuronpedia/jacobian-lens/tree/main/qwen3-1.7b) | replica opzionale; fissare il formato del prompt e la modalità di generazione |
 
-## Riferimenti chiave
+Si usa **un solo checkpoint** nella tesi minima. Un LoRA o una modifica degli embedding cambia le attivazioni: il Lens pre-fittato non si trasferisce automaticamente al modello adattato. Per semplicità, il nucleo usa un modello congelato e non introduce nuovi token.
 
-- [Gurnee et al. (2026), *Verbalizable Representations Form a Global Workspace in Language Models*](https://arxiv.org/abs/2607.15495) — definizione del Jacobian Lens e test funzionali delle rappresentazioni verbalizzabili.
-- [Ameisen et al. (2025), *Circuit Tracing: Revealing Computational Graphs in Language Models*](https://www.transformer-circuits.pub/2025/attribution-graphs/methods.html) — metodo dei grafi di attribuzione, replacement model e verifica con interventi.
-- [Libreria `circuit-tracer`](https://github.com/decoderesearch/circuit-tracer) e [Neuronpedia, Jacobian Lens](https://www.neuronpedia.org/blog/jacobian-lens) — disponibilità degli strumenti, da verificare per il checkpoint preciso.
-- [Zhang e Nanda (2024), *Towards Best Practices of Activation Patching in Language Models*](https://arxiv.org/abs/2309.16042) — scelte di corruption, metrica e controlli.
-- [Geiger et al. (2025), *Causal Abstraction for Mechanistic Interpretability*](https://www.jmlr.org/papers/volume26/23-0058/23-0058.pdf) — cornice concettuale per la fedeltà causale di astrazioni meccanicistiche.
-- [Burdisso et al. (2024), *On the Validity of Using the Therapist's Prompts in DAIC-WOZ*](https://aclanthology.org/2024.clinicalnlp-1.8/) — controllo di dominio sui rischi delle domande dell'intervistatore.
+Stack: Python, PyTorch, Hugging Face Transformers, [implementazione Jacobian Lens](https://github.com/anthropics/jacobian-lens), hook per il residual stream, `pandas` e statistiche con bootstrap sulle coppie/template. Neuronpedia serve per esplorare esempi pubblici; i risultati quantitativi e gli eventuali transcript si elaborano localmente.
+
+## Livello B — Applicazione session-level
+
+Solo dopo RQ1–RQ3 si verifica una classificazione `PHQ-8 < 10` contro `PHQ-8 >= 10` usando i **soli turni del partecipante**. Occorrono accesso legittimo al corpus, split per partecipante, policy di troncamento fissata sul development e confronto con TF-IDF/lineare o un encoder testuale. Il label deriva dal self-report dell'intera sessione: una frase modificata non riceve un nuovo label clinico.
+
+Se il modello non supera il gate predittivo o gli artefatti del corpus non sono disponibili, si riporta il limite e si conclude sul Livello A. I punteggi degli otto item non sono richiesti: nella release E-DAIC studiata da [Mandal et al. (2025)](https://aclanthology.org/2025.clpsych-1.4.pdf), il test ufficiale contiene il totale ma non gli score dei singoli item.
+
+## Gate e piano in 6–9 mesi
+
+| Quando | Gate verificabile | Decisione |
+| --- | --- | --- |
+| Settimane 1–2 | checkpoint e Lens pre-fittato caricati; readout e patching riproducibili su poche coppie sintetiche | scegliere uno dei checkpoint della shortlist prima di fissare il benchmark |
+| Mese 1 | coppie dei domini, template di test separati e metrica comportamentale verificati | fissare tre domini per il patching intensivo e bloccare i criteri |
+| Mesi 2–4 | J-Lens, Logit Lens, random matched e patching comune completati | rispondere a RQ1–RQ3 anche se gli effetti sono nulli |
+| Mesi 5–6 | analisi di robustezza, intervalli e scrittura | tesi minima completa |
+| Mesi 7–9, se disponibili | pilot DAIC/E-DAIC e, solo dopo, eventuale Circuit Tracer su pochi casi | estensione senza cambiare i risultati principali |
+
+La tesi deve riportare anche i domini nei quali il modello non è competente e quelli per cui J-Lens non anticipa gli effetti. Un risultato positivo o negativo sulle coppie controllate è una risposta completa alla domanda metodologica.
+
+## Riferimenti essenziali
+
+- [Gurnee et al. (2026), *Verbalizable Representations Form a Global Workspace in Language Models*](https://transformer-circuits.pub/2026/workspace/index.html) — metodo J-Lens e interventi sul J-space.
+- [Repository di riferimento Jacobian Lens](https://github.com/anthropics/jacobian-lens) — caricamento di Lens pre-fittati e confronto con Logit Lens.
+- [Zhang e Nanda (2024), *Towards Best Practices of Activation Patching*](https://arxiv.org/abs/2309.16042) — scelta di interventi, controlli e metriche.
+- [Mandal et al. (2025), *Enhancing Depression Detection via Question-wise Modality Fusion*](https://aclanthology.org/2025.clpsych-1.4.pdf) — natura degli score per item e disponibilità delle label E-DAIC.
