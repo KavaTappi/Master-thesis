@@ -24,6 +24,18 @@ TASK: Does the participant report a sleep difficulty? A = yes, B = no.
 
 La risposta corretta è definita dal contenuto del partecipante. Un'altra famiglia di prompt dell'intervistatore, semanticamente neutra rispetto al compito, viene associata ad `A` con una frequenza scelta **solo nel training**. Il modello può imparare la regola legittima (leggere la risposta) o la scorciatoia (guardare la forma della domanda). Le famiglie di prompt devono differire in modo controllato per lunghezza, posizione e tokenizzazione; si varia una proprietà per volta.
 
+---
+
+Capire magari come Ellie o le domande vanno ad impattare più positivamente sulle performances, un certo tipo di semantica o costrutti psichiatrici che si interpone sul filone che sarebbe la semantica del testo, valutare il lexicon del testo, insieme di parole che vanno a definire una particolare psicopatologia, concept banks, liste di termini validati da clinici
+
+Se per un modello non ci sono shortcut va bene -> puoi usarlo per approcci 
+Non c'è semantica significativa / lexicon che attiva certe classi 
+
+
+---
+
+
+
 Le condizioni essenziali sono:
 
 | Condizione | Scopo |
@@ -119,16 +131,6 @@ La contribuzione difendibile è un confronto riproducibile fra spiegazioni dell'
 Il modello principale può richiedere **LoRA**. Questo è compatibile con il nucleo della tesi, perché il patching si esegue sul checkpoint finale effettivamente usato. Jacobian Lens e Circuit Tracer pre-fittati non sono requisiti: dopo l'adattamento non si presume che restino validi. Eventuali probe, head ablation, path patching o Circuit Tracer sono estensioni successive.
 
 Stack: Python, PyTorch, Hugging Face Transformers/PEFT, scikit-learn, Captum per Integrated Gradients, hook PyTorch per il residual stream, bootstrap appaiato su esempi/template e configurazioni versionate.
-
-## Piano minimo in 6–9 mesi
-
-| Periodo | Deliverable |
-| --- | --- |
-| Settimane 1–3 | mini-interviste, split per template, condizione bilanciata/fortemente correlata, baseline semplice e controllo positivo sul LLM |
-| Mesi 2–3 | audit comportamentale fattoriale e spiegazioni sull'input, con risultati fissati sul test |
-| Mesi 3–5 | patching su un numero limitato di siti e coppie, controlli random e inversi, replica fra template |
-| Mese 6 | analisi quantitativa, risultati nulli e scrittura del nucleo |
-| Mesi 7–9, se disponibili | audit delle domande naturali di Ellie; analisi interna solo se appare una dipendenza comportamentale robusta |
 
 **Esito positivo del nucleo:** il modello acquisisce la scorciatoia controllata e alcuni siti trasferiscono selettivamente parte del suo effetto. **Esito negativo del nucleo:** il modello usa il cue ma le spiegazioni non localizzano siti fedeli, oppure la sensibilità appare soltanto per cue espliciti. Entrambi rispondono alla domanda metodologica; si riportano anche limiti, copertura e costo. Se il controllo positivo non funziona, il disegno va corretto entro il gate iniziale, prima di impegnare mesi nell'analisi interna.
 
