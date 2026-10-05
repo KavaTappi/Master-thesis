@@ -205,6 +205,8 @@ Sparse autoencoder e analisi di feature latenti restano un'estensione facoltativ
 4. **Confermare che il test abbia sensibilità.** Verificare su coppie separate e sensate che lo stesso modello reagisca a cambiamenti pertinenti nelle affermazioni del partecipante; controllare che l'intervento tecnico cambi l'output quando si agisce su un sito con effetto noto o su un controllo positivo. Se non reagisce a nulla, un risultato nullo sulle domande non è interpretabile.
 
 5. **Stabilire che cosa significhi «effetto trascurabile».** Prima del test finale definire sul development una soglia minima di effetto rilevante per la media dei valori assoluti di `s(originale) - s(variante)` e/o per la frequenza di cambi di classe. Sul campione finale calcolare intervalli d'incertezza con bootstrap per partecipante, anche per i sottogruppi prespecificati che hanno abbastanza dati. Si può sostenere una dipendenza inferiore alla soglia testata soltanto se il limite superiore dell'intervallo della misura prescelta resta sotto quella soglia. Un valore non significativo con intervallo ampio significa *evidenza insufficiente*, non indipendenza.
+
+   
 ---
 
 ## 5 - Se non emerge una dipendenza dal protocollo?
