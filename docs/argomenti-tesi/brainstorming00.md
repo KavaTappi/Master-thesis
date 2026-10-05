@@ -1,13 +1,3 @@
----
-title: Piano della tesi
-permalink: /
-description: Proposta di tesi su LLM, DAIC-WOZ, lessici ed explainability meccanicistica, con piano di riserva.
----
-
-[Diario settimanale]({{ '/settimane/' | relative_url }}) · [Bibliografia ragionata]({{ '/bibliografia/' | relative_url }})
-
-<!-- Contenuto informativo tratto da docs/argomenti-tesi/brainstorming00.md. -->
-
 # Interpretabilità meccanicistica degli LLM nella predizione della depressione: un audit guidato da lessici su DAIC-WOZ ed E-DAIC
 
 Proposta di tesi magistrale in Computer Science applicata alla psichiatria. Brainstorming del 5 ottobre 2026; il documento propone esperimenti, non riporta risultati già ottenuti.
