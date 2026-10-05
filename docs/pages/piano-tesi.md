@@ -10,7 +10,7 @@ description: Proposta di tesi su LLM, DAIC-WOZ, lessici ed explainability meccan
 
 # Interpretabilità meccanicistica degli LLM nella predizione della depressione: un audit guidato da lessici su DAIC-WOZ ed E-DAIC
 
-Proposta di tesi magistrale in Computer Science applicata alla psichiatria. Brainstorming del 5 ottobre 2026; il documento propone esperimenti, non riporta risultati già ottenuti.
+Proposta di tesi magistrale in Computer Science applicata alla psichiatria. 
 
 ## 1. Domanda centrale e idea della tesi
 

@@ -5,7 +5,7 @@ layout: default
 description: Bibliografia ragionata per il piano della tesi sugli LLM, DAIC-WOZ ed explainability meccanicistica.
 ---
 
-# Bibliografia ragionata per brainstorming00: lessici, shortcut e interpretabilità meccanicistica nella predizione della depressione
+# Bibliografia ragionata per: lessici, shortcut e interpretabilità meccanicistica nella predizione della depressione
 
 **Ricerca aggiornata al 5 ottobre 2026.** Riferimento progettuale: [piano della tesi]({{ '/' | relative_url }}).
 
