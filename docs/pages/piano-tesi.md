@@ -1,190 +1,294 @@
 ---
-title: Piano della tesi
-permalink: /
-description: Proposta di tesi su LLM, DAIC-WOZ, lessici ed explainability meccanicistica, con piano di riserva.
+title: Piani di tesi — proposte 00 e 01
+permalink: /piano-tesi-new/
+description: Due proposte per la discussione con il relatore, dalla scoperta di circuiti guidata da lessici all’audit degli indizi d’intervista.
 ---
 
-[Diario settimanale]({{ '/settimane/' | relative_url }}) · [Bibliografia ragionata]({{ '/bibliografia/' | relative_url }})
+# Piani di tesi per la discussione con il relatore
 
-<!-- Contenuto informativo tratto da docs/argomenti-tesi/brainstorming00.md. -->
+[Proposta 00 — lessici e circuiti](#thesis-plan00) · [Proposta 01 — audit dell’intervista](#thesis-plan01)
 
-# Interpretabilità meccanicistica degli LLM nella predizione della depressione: un audit guidato da lessici su DAIC-WOZ ed E-DAIC
+<a id="thesis-plan00"></a>
 
-Proposta di tesi magistrale in Computer Science applicata alla psichiatria. 
+# Thesis-plan00 — Guida lessicale alla scoperta dei circuiti
 
-## 1. Domanda centrale e idea della tesi
+**Proposta prioritaria per la discussione con il relatore.** Sintesi di `proposta-carman00.md`, aggiornata con i chiarimenti su fedeltà, costo e piani alternativi. Le ipotesi e i titoli finali non anticipano risultati sperimentali.
 
-**In quale misura le predizioni di un LLM sulle etichette di depressione di DAIC-WOZ ed E-DAIC dipendono da espressioni sintomatologiche del partecipante oppure da indizi del protocollo d'intervista, e quali componenti interne mediano queste dipendenze?**
+## 1. Titolo
 
-La proposta combina tre elementi:
+### 1.1 Titolo proposto
 
-- costruire con un LLM un lessico specializzato e revisionato da esseri umani;
-- usarlo per individuare categorie di evidenze e progettare confronti controllati;
-- intervenire sulle attivazioni del modello predittivo per verificare se le componenti individuate contribuiscono alle sue decisioni.
+**Il valore della guida lessicale nella scoperta di circuiti degli LLM: costo, fedeltà e generalizzazione su interviste DAIC-WOZ.**
 
-Il lessico diventa quindi uno **strumento per formulare e verificare ipotesi sul modello**, oltre che una baseline interpretabile.
+### 1.2 Domanda centrale
 
----
-### 1.1 - Dove collocare l'originalità cont'd
+A parità di risorse e di dimensione del circuito, un lessico permette di trovare circuiti che riproducono più fedelmente le predizioni di un LLM sul PHQ-8, mantenendo questa fedeltà su partecipanti nuovi e parafrasi?
 
-L'**oggetto scientifico principale** è dunque distinguere tre livelli che spesso vengono confusi: 
-- **segnale disponibile nel corpus** (E2),
-- **segnale effettivamente usato dal predittore** (E3)
-- **componenti interne che mediano l'effetto osservato** (E4).
-  
-Il contributo metodologico aggiuntivo è verificare se il lessico aiuta a trovare tali effetti più efficacemente dei controlli (E5). Una categoria lessicale non è, di per sé, una feature interna: nel protocollo principale **il predittore riceve il dialogo, non il lessico come feature aggiuntiva**. I conteggi lessicali possono alimentare una baseline distinta.
+### 1.3 Obiettivi e contributo atteso
 
-Un esempio delimita la conclusione cercata: se una domanda di approfondimento sulla storia clinica viene parafrasata mantenendo una risposta autosufficiente del partecipante, un cambiamento replicabile dello score indica sensibilità del modello a quella modifica. Se il patching di attivazioni selezionate trasferisce parte della differenza fra le due versioni, si ottiene evidenza che quei siti contribuiscono a **quella** dipendenza. Solo con controlli semantici e contestuali adeguati si può discutere se la dipendenza sia una scorciatoia indesiderata, anziché un uso legittimo del contesto. Se il lessico permette di individuare più casi e siti confermati dello stesso tipo, con lo stesso budget dei metodi alternativi, se ne dimostra l'utilità per progettare l'audit; il semplice fatto di avere generato il lessico non basta.
+- Progettare una priorità lessicale per la ricerca di circuiti e confrontarla con guide globali, casuali e basate sulla salienza.
+- Misurare il valore aggiunto del lessico in termini di costo, fedeltà e trasferimento.
+- Produrre un protocollo riproducibile che documenti anche condizioni di inefficacia e limiti della guida.
 
-La verifica su sessioni autonome E-DAIC disgiunte (E6) serve a stimare **quanto il risultato si trasferisce** cambiando protocollo, se trascrizioni e label lo permettono. 
+### 1.4 Possibili casi d’uso
 
-La mitigazione (E7) è un'estensione, dato che [Zhang e Poellabauer (2025)](https://aclanthology.org/2025.findings-emnlp.650/) hanno già proposto un metodo per ridurre il bias dell'intervistatore. 
+- **Audit con risorse limitate:** scegliere una strategia di ricerca che raggiunga una fedeltà prefissata con meno calcolo.
+- **Verifica delle spiegazioni interne:** controllare se un circuito resta valido quando cambia il modo di esprimere lo stesso contenuto.
+- **Progettazione di strumenti di interpretabilità:** stabilire quando convenga introdurre conoscenza lessicale esterna.
 
-La rivendicazione finale va calibrata sugli esiti:
-esempio:
-- E2 positivo da solo replica un fenomeno noto;
-- E3 positivo aggiunge evidenza sull'uso nel LLM;
--  E4 positivo aggiunge una verifica interna delimitata; E5 positivo mostra il valore specifico del lessico.
--  E3 è nullo con misure informative, l'esito circoscrive la dipendenza del modello testato;
--   E4 sulle domande non è allora applicabile e non si può rivendicare che E5 abbia trovato meglio
-quegli effetti interni.
+## 2. Ipotesi verificabili e domande di ricerca
 
-### 1.3 - Possibili casi d'uso dei risultati
+| Domanda/Ipotesi | Macro area | Esperimento | Esito positivo | Esito negativo |
+|---|---|---|---|---|
+| **H0 — Il sistema è studiabile con le risorse disponibili?** | Fattibilità | E0–E1: dati, lessico, modello e controlli sugli interventi. | Input e categorie utilizzabili, comportamento non degenere e interventi corretti entro il budget. | Dati insufficienti, output non informativi o interventi non validabili: attivare il piano alternativo prima dell’audit esteso. |
+| **H1 — La guida lessicale migliora il compromesso costo–fedeltà?** | Efficienza | E2: confronto delle curve di errore a dimensione del circuito controllata; E5: robustezza. | Errore inferiore allo stesso costo, oppure costo inferiore alla stessa tolleranza, includendo lo screening. | Nessun vantaggio pratico o costo aggiuntivo superiore al risparmio. |
+| **H2 — Il vantaggio dipende dall’informazione lessicale?** | Specificità | E0, E2 ed E5: confronto con maschere casuali abbinate e salienza, a copertura comparabile. | La guida lessicale supera i controlli secondo una misura prefissata. | Il vantaggio è riprodotto dai controlli o spiegato da frequenza, posizione e numero dei token selezionati. |
+| **H3 — I circuiti restano fedeli oltre gli esempi di scoperta?** | Generalizzazione | E3: nuove persone e parafrasi; E6: eventuale replica esterna. | L’incremento di errore resta entro una tolleranza fissata sul development e il vantaggio si conserva. | La fedeltà o il vantaggio si deteriorano, soprattutto fuori dal vocabolario iniziale. |
+| **H4 — Il circuito riproduce la sensibilità contestuale del modello?** | Contesto | E4: negazione, temporalità e persona cui è riferita l’esperienza. | Il circuito riproduce le variazioni dello score del modello completo. | Il circuito perde differenze contestuali presenti nel modello. |
 
-Questi sono scenari concreti per usare i **risultati della ricerca**; non presuppongono che il modello studiato sia già idoneo a prendere decisioni cliniche.
+**Regola di interpretazione:** intervalli ampi producono un risultato inconcludente, non una dimostrazione di assenza di effetto. H1 è primaria; H2 e H3 ne delimitano il significato. H4 è un approfondimento secondario.
 
-1. **Revisione di un assistente per interviste semistrutturate.** Un team sta sviluppando un sistema di supporto per analizzare trascrizioni. Se una categoria di domande di approfondimento produce effetti sistematici sulle predizioni, può decidere di riformulare quelle domande nei dati di addestramento, costruire esempi di controllo e ripetere l'audit dopo la modifica. Se le domande non producono effetti rilevanti, può concentrare la revisione su altre fonti di errore. Esistono già approcci che cercano di ridurre il bias dell'intervistatore tramite addestramento adversarial: [Zhang e Poellabauer (2025)](https://aclanthology.org/2025.findings-emnlp.650/).
-2. **Passaggio da interviste guidate da persone a interviste con agente autonomo.** Un laboratorio vuole verificare un modello allenato su colloqui WoZ anche su sessioni autonome. La mappa degli indizi e delle componenti interne può indicare quali effetti sopravvivono al cambiamento del protocollo e quali richiedono nuova verifica. Per attribuire le differenze al protocollo bisogna controllare sovrapposizione delle sessioni, qualità ASR e distribuzione delle label; il manuale [E-DAIC](https://dcapswoz.ict.usc.edu/wwwedaic/E-DAIC%20Manual.pdf) descrive entrambi i tipi di sessione.
-3. **Esame di errori e spiegazioni da parte di ricercatori e clinici.** In una revisione sperimentale, il sistema assegna un punteggio alto a una trascrizione. L'audit può mostrare se il punteggio è sensibile a una domanda di Ellie sulla terapia, a ciò che il partecipante ha detto sui sintomi, o a entrambi. La categoria del lessico rende il caso facile da cercare e discutere; il patching verifica una dipendenza del modello. L'interpretazione del caso resta compito delle persone e non trasforma un'etichetta PHQ-8 in una diagnosi.
-4. **Strumento riutilizzabile per altri studi su interviste.** Se il lessico seleziona perturbazioni efficaci e replicabili meglio dei controlli a parità di budget, pubblicarne definizioni, criteri di revisione e protocollo sperimentale può aiutare altri gruppi a verificare modelli su colloqui simili. Anche un risultato negativo è utile: chiarisce quando una categoria lessicale intuitiva non aiuta a spiegare il calcolo dell'LLM.
+## 3. Stack tecnico
 
+### 3.1 Dataset
 
-## 2. Ipotesi verificabili
+- **DAIC-WOZ:** trascrizioni in inglese, ruoli dei parlanti ed etichetta binaria ufficiale associata al PHQ-8, verificata nella release disponibile. [Fonte ufficiale](https://dcapswoz.ict.usc.edu/).
+- Separare addestramento eventuale, scoperta, development e valutazione finale per partecipante. Tutte le varianti di una persona rimangono nello stesso split; se il test ufficiale non è utilizzabile, dichiarare la valutazione interna.
+- Il modello riceve lo stesso dialogo in tutte le strategie di ricerca. Il lessico marca inizialmente le risposte del partecipante.
+- Se il contesto completo è troppo costoso, usare estratti deterministici distribuiti nel dialogo, indipendenti da lessico ed etichetta. In tal caso si spiegano le predizioni sugli estratti.
+- Costruire parafrasi revisionate che evitino le voci usate nella guida. Separare, ove possibile, famiglie di espressioni fra scoperta e verifica.
+- Replica esterna facoltativa su un task testuale semplice o su dati compatibili e disgiunti. E-DAIC richiede controlli di sovrapposizione e protocollo.
 
-| Ipotesi | Esperimento discriminante | Conclusione ammissibile |
-|---|---|---|
-| H1 — Il modello dipende da indizi del protocollo | Modificare indizi di Ellie mantenendo il contenuto informativo del partecipante, con controlli di coerenza e lunghezza | Dipendenza dagli indizi manipolati; evidenza di shortcut solo se il disegno esclude spiegazioni alternative plausibili |
-| H2 — Alcune componenti interne mediano tale dipendenza | Activation patching e ablazioni mirate, confrontati con componenti di controllo | Contributo causale interno nel modello, per gli input e gli interventi studiati |
-| H3 — Il lessico aiuta a progettare l'audit | Confrontare span/interventi scelti tramite lessico, selezione casuale abbinata e attribuzioni, a parità di budget | Utilità del lessico nel trovare effetti interni replicabili; l'LLM predittivo riceve sempre il dialogo |
-| H4 — Gli effetti si replicano cambiando protocollo | Ripetere gli esperimenti su sessioni E-DAIC autonome e disgiunte | Trasferibilità degli effetti nel campione esaminato; eventuale eterogeneità tra protocolli |
+### 3.2 Task del modello e ambiente
 
-H1–H3 costituiscono il nucleo. H4 dipende dalla disponibilità effettiva di trascrizioni, ruoli dei parlanti e label utilizzabili. Le ipotesi possono essere smentite senza invalidare l'intero lavoro.
+**Task principale:** predizione della classe binaria PHQ-8 mediante un LLM piccolo con pesi e attivazioni accessibili. Confrontare il modello base e, se necessario, un adattamento LoRA solo sul training; congelare poi checkpoint, prompt e soglia. Baseline predittive: classe maggioritaria e TF-IDF con regressione logistica.
 
-## 3. Dataset e task
+Usare due simboli di classe verificati come singoli token. Definire lo score come differenza fra i loro logits e la probabilità come softmax limitata alle due opzioni. Quest’ultima non è automaticamente calibrata. Metriche predittive: macro-F1, AUROC e log-loss.
 
-### 3.1 - Target operativo
+**Ambiente previsto:** Python, PyTorch, Transformers, PEFT per LoRA, strumenti di accesso alle attivazioni compatibili con il checkpoint, codice [IPE/MIB](https://github.com/nepp1d0/MIB-circuit-track-with-paths), scikit-learn e pandas. La compatibilità va verificata nel pilot.
 
-Usare come task principale la predizione dell'**etichetta binaria ufficiale associata al PHQ-8**, verificandone la codifica nella release disponibile. 
+Una GPU Colab Pro può servire per il pilot; la configurazione effettiva determina i budget. Partire da un modello intorno a 0,5B e input di 256–512 token come prova tecnica, senza assumere che questa configurazione sia già sufficiente per il task finale.
 
-#### 3.1.1 - Confronti principali
+### 3.3 Explainability, lessico e confronti
 
-- **Participant-only:** solo risposte del partecipante.
-- **Ellie-only:** solo domande dell'intervistatore, come controllo del segnale predittivo del protocollo.
-- **Dialogo completo:** domande e risposte con ruoli espliciti.
-- **Dialogo con modifiche controllate:** neutralizzazione o parafrasi di indizi selezionati tramite lessico, più modifiche di controllo abbinate per lunghezza e posizione.
+#### 3.3.1 Sviluppo del lessico
 
-Confrontare anche baseline semplici: classe maggioritaria, TF-IDF con regressione logistica e conteggi per categoria del lessico con regressione logistica regolarizzata, LLM deve essere utile effettivamente (passaggio facoltativo, posso presuppporlo come precondizione per la domanda di ricerca)
+Partire da una risorsa inglese documentata, per esempio categorie selezionate di [NRC EmoLex](https://www.saifmohammad.com/WebPages/NRC-Emotion-Lexicon.htm). Registrare fonte, versione, categorie, condizioni d’uso, regole di matching e offset dei token. Un’eventuale estensione con espressioni di sonno, energia o interesse deve essere revisionata da persone e costruita senza utilizzare il test.
 
-**Importante:** cancellare una domanda può rendere incomprensibile una risposta come «yes». Le perturbazioni principali devono conservare il referente e la coerenza del dialogo, con verifica umana su un sottoinsieme. **La cancellazione grezza può restare uno stress test, senza attribuirle automaticamente un significato causale specifico.**
+Valutare precisione/recall del matcher e accordo fra annotatori su un campione indipendente. Le categorie sono strumenti di analisi: non assegnano diagnosi o label PHQ-8 alle frasi.
 
-**Importante 2** : Un'alta performance Ellie-only segnala informazione disponibile nelle domande; non prova che il modello sul dialogo completo la sfrutti. Analogamente, una diminuzione dopo aver eliminato sintomi informativi è attesa e non dimostra uno shortcut. Quest'ultimo richiede evidenza di dipendenza da indizi non necessari al target definito, sostenuta da confronti controllati.
+#### 3.3.2 Procedura di ricerca
 
+1. **Screening EAP-IG:** stimare l’importanza degli archi e conservare, ove possibile, i contributi per posizione. [Hanna et al., 2024](https://arxiv.org/abs/2403.17806).
+2. **Guida lessicale:** combinare una graduatoria globale con una graduatoria relativa alle posizioni coperte dal lessico e al loro contesto; scegliere il peso sul development. La guida cambia la priorità dei candidati, mantenendo esplorazione anche fuori dal lessico.
+3. **Interventi sui percorsi:** verificare candidati mediante IPE, con budget massimo di calcolo, profondità e regola di prosecuzione comuni. [Brunello et al., 2025](https://aclanthology.org/2025.blackboxnlp-1.30/).
+4. **Verifica congiunta:** costruire circuiti di dimensioni comparabili e misurarne il comportamento intervenendo sui contributi esterni. Gli effetti dei singoli percorsi non sono automaticamente additivi.
+5. **Congelamento:** valutare i circuiti su nuovi dati senza riscoprirli sul test.
 
-### 3.2 - Costruzione del lessico specializzato
+Il testo e i pesi del modello originale rimangono fissi. Le esecuzioni con interventi sono esperimenti separati: sostituire attivazioni modifica il calcolo interno, senza necessariamente modificare i token di input. Le coppie di riferimento devono essere coerenti e allineate nelle posizioni su cui si interviene.
 
-### Struttura proposta
+#### 3.3.3 Confronti da realizzare
 
-Costruire un lessico in inglese, coerente con la lingua delle interviste, con tre famiglie distinte:
-
-| Famiglia | Esempi di categorie da definire | Funzione nell'audit |
-|---|---|---|
-| Espressioni sintomatologiche | umore depresso, anedonia, sonno, energia, concentrazione, autosvalutazione | Individuare evidenze compatibili con il target |
-| Storia clinica e trattamento | diagnosi riferite, psicoterapia, farmaci, precedenti episodi | Separare storia clinica e sintomi attuali |
-| Indizi dell'intervista | formule di approfondimento, domande su diagnosi/trattamento, transizioni tematiche | Individuare possibili segnali del protocollo |
-
-Queste famiglie sono **categorie di analisi**, non classi di parole automaticamente «buone» o «spurie». La stessa espressione cambia significato a seconda di chi parla, della negazione e del riferimento temporale. Una diagnosi passata riferita dal partecipante è informazione reale, pur non coincidendo necessariamente con lo stato attuale.
-
-
-## 4. Tecniche di explainability e nucleo meccanicistico
-
-### 4.1 - Localizzazione preliminare
-
-**Esempio comune, inventato solo per spiegare gli esperimenti:** Ellie chiede «Do you still go to therapy?» e il partecipante risponde «I stopped therapy two years ago». Il lessico marca la domanda di Ellie come *approfondimento sul trattamento* e la risposta come *storia di trattamento riferita dal partecipante*. Non assegna la label PHQ-8 a queste frasi e non viene passato all'LLM predittivo. Una possibile variante è la domanda «Could you tell me about the help you received?», lasciando invariata la risposta. La coppia va comunque controllata da persone: cambiando domanda si può cambiare anche il contesto interpretativo.
-
-| Tecnica | Esperimento esemplificativo | Che cosa può indicare, e limite |
-|---|---|---|
-| **Occlusione di span** | Nascondere «Do you still go to therapy?» e misurare quanto cambia lo score del dialogo. | Segnala un passaggio candidato; cancellarlo può però rendere meno comprensibile la risposta, perciò serve una variante coerente e un controllo abbinato. |
-| **Attribuzione basata sui gradienti** | Calcolare quanto lo score è sensibile agli embedding dei token della domanda, confrontandoli con quelli della risposta. | Offre una graduatoria di token da esaminare; un gradiente elevato è una sensibilità locale, non prova che un token sia necessario alla decisione. |
-| **Probe lineare** | Addestrare un piccolo classificatore su rappresentazioni interne, su interviste separate, per riconoscere se una domanda appartiene alla categoria «trattamento». | Mostra se l'informazione è decodificabile in un layer; non mostra che l'LLM la usi per predire il PHQ-8. |
-| **Spiegazione verbale dell'LLM** | Chiedere perché ha predetto una classe e verificare se cita «therapy». | Fornisce un'ipotesi da controllare: il modello può nominare una prova che non ha avuto effetto causale sulla sua predizione. |
-
-Queste tecniche servono a generare candidati e controlli. La verifica del contributo interno richiede gli interventi descritti sotto; i siti vanno selezionati su dati separati da quelli usati per confermarli.
-
-### 4.2 - Activation patching: metodo principale
-
-Il patching sostituisce attivazioni di una computazione con quelle ottenute da un altro input, misurando l'effetto sull'output. La scelta della coppia di input, del punto d'intervento e della metrica condiziona l'interpretazione. [Zhang e Nanda, ICLR 2024](https://arxiv.org/abs/2309.16042).
-
-**Esempio:** eseguire l'LLM sul dialogo con «Do you still go to therapy?» e sulla variante con «Could you tell me about the help you received?», mantenendo la stessa risposta. Se i due score differiscono, prendere l'attivazione di un layer dalla prima esecuzione e inserirla nella seconda, alla posizione finale da cui si genera la classe. Se lo score della seconda esecuzione si avvicina a quello della prima più che nei patch di controllo, quel sito **media parte della differenza causata dalla coppia di input studiata**. Questo non isola automaticamente la categoria «trattamento»: le formulazioni differiscono anche per lunghezza e sfumature semantiche. Servono più coppie, controlli linguistici e, se si interviene su token intermedi, un allineamento esplicito delle posizioni.
-
-**Protocollo proposto per questa tesi su come applicarlo:**
-
-1. Costruire coppie originale/variante in cui cambia un indizio definito dal lessico. Separare interventi sul protocollo e interventi sui sintomi: rispondono a ipotesi diverse.
-2. Misurare lo score di entrambe le versioni. Se una coppia non produce differenze apprezzabili, conservarla nell'analisi della frequenza degli effetti; non usarla per rapporti di recupero instabili.
-3. Intervenire inizialmente sul residual stream di pochi layer e su posizioni comparabili, per esempio la posizione finale da cui si predice la classe. Approfondire i contributi di attention head o MLP soltanto dove emerge un effetto replicabile.
-4. Trasferire le attivazioni dall'originale alla variante e viceversa. Per interventi su token intermedi, usare template allineati o una mappatura esplicita degli span; non associare meccanicamente posizioni che hanno cambiato significato.
-5. Misurare quanto lo score si sposta verso quello della computazione sorgente e confrontare l'effetto con patch su siti di controllo.
-
-Per rendere la misura trasparente, definire `s(x)` come score della classe positiva. L'effetto primario del patching è `s(variante con patch) - s(variante)`. Un recupero normalizzato può essere calcolato dividendo per `s(originale) - s(variante)`, solo quando il denominatore supera una soglia stabilita sul development. Riportare sempre anche gli effetti non normalizzati e i casi esclusi dal rapporto.
-
-
-   
----
-
-## 6. Valutazione, fattibilità e risultati attesi
-
-### Tre valutazioni distinte
-
-| Livello | Misure proposte |
+| Strategia | Funzione nel confronto |
 |---|---|
-| Predizione | macro-F1, precision/recall della classe positiva, balanced accuracy e intervalli d'incertezza; soglie fissate sul development |
-| Lessico | accordo tra annotatori, precisione/recall del riconoscimento dei costrutti su passaggi annotati, copertura e tipi di errore |
-| Spiegazione meccanicistica | variazione dello score, frequenza degli effetti, recupero dopo patch, confronto con controlli e replica su input nuovi |
+| EAP-IG con selezione standard degli archi | Baseline che verifica se l’ulteriore ricerca dei percorsi è utile. |
+| Ricerca con priorità globale | Stessa procedura proposta, senza contributo lessicale. |
+| Ricerca con priorità lessicale | Variante da valutare. |
+| Ricerca con maschere casuali abbinate | Controllo di numero, posizione, frequenza e lunghezza degli span. |
+| Ricerca guidata dalla salienza dei token | Controllo del vantaggio rispetto a informazione ricavata direttamente dal modello. |
+| IPE originale e metodo position-aware | Riferimenti metodologici su un sottoinsieme sostenibile e con protocollo comparabile. |
 
+[Position-aware Automatic Circuit Discovery](https://aclanthology.org/2025.acl-long.141/) considera già posizioni e span semantici. La proposta deve dimostrare il valore incrementale del lessico: la sola combinazione di tecniche esistenti e DAIC non garantisce originalità. Il controllo con salienza non equivale a riprodurre il metodo position-aware.
 
+### 3.4 Analisi quantitative
 
-Per valutare H3, confrontare metodi di selezione con lo stesso numero di span/componenti e lo stesso budget di interventi. Il lessico è utile se favorisce effetti più replicabili, migliore copertura di categorie o minore costo di ricerca: non deve necessariamente migliorare la classificazione.
+**Riferimento della fedeltà:** l’output del modello completo sulla stessa intervista, non il PHQ-8 osservato. Indicando con `p_M(x)` l’output originale e con `p_C(x; r)` quello ottenuto dal circuito sotto un riferimento di intervento fissato:
 
-## 7. Esperimenti e Come cambia il titolo in base ai risultati 
+`E_fid(C) = media_per_partecipante [abs(p_M(x) − p_C(x; r))]`
 
-### 7.1 - Esperimenti da riportare separatamente
+Il grafo completo deve avere errore prossimo a zero. È il massimo teorico, ma conserva tutto il modello: confrontare quindi circuiti di pari dimensione. Aggiungere circuito vuoto e sottografi casuali come controlli; dichiarare quando il riferimento produce un contrasto troppo piccolo per essere informativo.
 
-| Codice | Esperimento e misura principale | Esito positivo | Esito negativo o non risolto |
-|---|---|---|---|
-| **E0  -  Dati e lessico** | Verificare split e sovrapposizioni tra DAIC-WOZ/E-DAIC; annotare un campione per categoria, parlante, negazione e temporalità; misurare accordo e precisione del matcher. | Campioni utilizzabili e categorie sufficientemente affidabili per scegliere interventi. | Trascrizioni/label/ruoli insufficienti, sovrapposizioni non risolte o categorie poco affidabili: limitare corpus o ipotesi; non dichiarare validità clinica del lessico. |
-| **E1 - Modello predittivo** | Misurare macro-F1 e stabilità del modello sul task PHQ-8 rispetto a baseline; includere un controllo con cambiamenti pertinenti nelle affermazioni del partecipante. | Il modello produce uno score informativo e reagisce a evidenze rilevanti: ha senso spiegare le sue predizioni. | Prestazioni vicine alla baseline, output instabili o assenza di sensibilità ai controlli: un effetto nullo sulle domande di Ellie sarebbe poco interpretabile. |
-| **E2 - Segnale disponibile nelle domande** | Valutare Ellie-only rispetto a participant-only e a baseline banali su partecipanti separati. | Ellie-only predice sopra i controlli: le domande veicolano segnale nel corpus. | Ellie-only non supera i controlli: manca evidenza di segnale autonomo, ma il modello sul dialogo completo potrebbe comunque usare le domande come contesto. |
-| **E3 - Uso degli indizi di Ellie nel dialogo completo** | Riformulare o neutralizzare domande candidate, mantenere le risposte e controllare la coerenza; confrontare cambiamenti dello score e della classe con modifiche abbinate. | Effetto replicabile superiore alla soglia prefissata e ai controlli: il modello usa almeno gli indizi manipolati. La parola *shortcut* richiede anche argomentare perché quegli indizi siano inappropriati per il target. | Limite superiore dell'intervallo sotto la soglia: evidenza di effetto trascurabile nelle condizioni testate. Intervallo ampio o coppie incoerenti: risultato inconcludente. |
-| **E4 -Mediazione interna** | Sulle coppie E3 con effetto, fare patching in entrambe le direzioni su siti selezionati fuori dal campione finale; confrontare ablazioni e siti di controllo. | Componenti specifiche modificano lo score nella direzione attesa e l'effetto si replica su nuovi partecipanti: evidenza di mediazione interna per quelle coppie. | Nessun sito regge ai controlli: non attribuire l'effetto a un circuito identificato. Se E3 non produce differenze, E4 su quelle coppie è *non applicabile*, non un risultato negativo. |
-| **E5 - Valore aggiunto del lessico** | Con lo stesso numero di span, componenti e interventi, confrontare selezione guidata dal lessico, scelta casuale abbinata e attribuzioni generiche; misurare precisione degli span e frequenza/replica degli effetti interni. | Il lessico migliora una misura prefissata rispetto ai controlli: rivendicare utilità del lessico per **progettare l'audit**. | Nessun vantaggio o lessico inaffidabile: riportare il risultato e attribuire i meccanismi al patching, senza dire che il lessico li ha trovati meglio. |
-| **E6 -Trasferimento di protocollo** | Ripetere E1–E3, ed E4 se fattibile, su sessioni autonome E-DAIC disgiunte; documentare differenze di ASR e disponibilità di Ellie. | Direzione ed entità dell'effetto coerenti: supporto alla trasferibilità nei corpus testati. | Effetto che cambia o scompare: risultato di dipendenza dal contesto di raccolta, da analizzare anche alla luce di ASR e composizione del campione. Se i dati non bastano, E6 è *non valutabile*. |
-| **E7 -Eventuale mitigazione** | Solo dopo E3/E4 positivi, attenuare gli indizi identificati nei dati o nel modello e ripetere predizione, E3 ed E6. | Minore dipendenza dagli indizi, senza un degrado eccessivo della predizione, su dati di conferma. | Prestazione o robustezza peggiorata, oppure dipendenza invariata: la mitigazione tentata non è supportata. E7 è facoltativo e non condiziona la tesi di audit. |
+- **Efficienza:** curva errore–tempo GPU, area su un intervallo comune e costo per raggiungere una tolleranza fissata sul development. Includere screening, preparazione della guida e ricerca; riportare separatamente annotazione e valutazione finale.
+- **Fedeltà e compattezza:** errore su probabilità e logits, accordo delle classi, numero di archi/nodi.
+- **Generalizzazione:** aumento dell’errore su parafrasi e persone nuove; distinguere instabilità del modello originale e infedeltà del circuito.
+- **Contesto:** distanza fra cambiamento dello score del modello e del circuito, `abs(Δs_M − Δs_C)`.
+- **Incertezza:** confronti appaiati, bootstrap per partecipante e repliche della scoperta. Stabilire soglie e differenze minime di interesse prima del test.
 
-E2 ed E3 rispondono a domande differenti: **informazione presente nelle domande** e **informazione usata dal predittore sul dialogo completo**. Per E3 un confronto «non significativo» con intervallo ampio resta *inconcludente*. Le condizioni per sostenere un effetto piccolo sono descritte nella sezione 7. E4 non può trovare la mediazione di una differenza che E3 non ha mostrato; in quel caso si possono applicare interventi interni a coppie basate sulle evidenze del partecipante, dichiarando il cambio di domanda di ricerca.
+Il risparmio è un’ipotesi: cambiare soltanto l’ordine di esplorazione non riduce necessariamente il costo se si esaminano infine gli stessi candidati.
 
-### 7.2 - Tipologie di titoli
+### 3.5 Perimetro e piano alternativo
 
-| Risultati osservati | Titolo coerente e portata della conclusione |
+Il nucleo comprende un modello, un task, un lessico, controlli abbinati e trasferimento alle parafrasi. Se IPE è troppo costoso, passare alla selezione di archi EAP-IG con verifica mediante patching: la domanda diventa il compromesso **dimensione–fedeltà**, senza presumere un risparmio nello screening. Se il predittore PHQ-8 resta non studiabile dopo un adattamento limitato, trasferire la domanda metodologica a un task testuale più semplice, aggiornando il titolo. Interventi non corretti devono essere riparati o sostituiti con strumenti validati prima di formulare conclusioni causali.
+
+## 4. Esperimenti da realizzare
+
+| Nome esperimento | A quale Ipotesi/Domanda risponde |
 |---|---|
-| **E0+, E1+, E2+, E3+, E4+, E5+, E6+**; E7 facoltativo | **Indizi del protocollo d'intervista nelle predizioni di un LLM sulla depressione: un audit meccanicistico guidato da lessici su DAIC-WOZ ed E-DAIC.** Si può discutere un effetto interno replicato e il contributo del lessico, senza chiamare automaticamente «circuito della depressione» i siti trovati. |
-| **E0+, E1+, E2±, E3+, E4+, E5+, E6 n.a.**; E7 non necessario | **Un audit meccanicistico guidato da lessici degli indizi d'intervista in un LLM su DAIC-WOZ.** Il risultato è interno e il lessico aiuta, ma non si rivendica trasferimento a E-DAIC. E2 può essere positivo o negativo, perché non decide l'uso nel dialogo completo. |
-| **E0+, E1+, E2±, E3+, E4? o −, E5± o ?, E6+ o ? o n.a.** | **Sensibilità di un LLM alle domande dell'intervistatore nella predizione della depressione: perturbazioni controllate su interviste semistrutturate.** La dipendenza comportamentale è osservata, ma non c'è prova stabile di quali componenti interne la medino. Citare E-DAIC nel titolo solo se E6 è positivo e sufficientemente studiato; E6− ricade nel caso sui limiti di trasferimento. |
-| **E0+, E1+, E2+, E3− con intervalli stretti e controlli sensibili, E4 n.a., E5 solo precisione degli span, E6+ o ? o n.a.** | **Verifica della dipendenza dagli indizi d'intervista in un LLM per la predizione della depressione.** Il segnale è disponibile nelle domande, ma l'effetto degli indizi manipolati sul modello completo è inferiore alla soglia prefissata nei dati testati. Se E6 è positivo, specificare che riguarda la replica dell'effetto trascurabile, non una dipendenza trovata. |
-| **E0+, E1+, E2±, E3− con intervalli stretti, E4+ su evidenze del partecipante, E5± sugli span del partecipante, E6+ o ? o n.a.** | **Evidenze del partecipante e indipendenza dagli indizi d'intervista: un audit meccanicistico di un LLM per la depressione.** Il patching qui risponde a una domanda diversa da E4 sugli indizi di Ellie: il modello usa specifiche informazioni del partecipante, mentre l'effetto delle domande manipolate è trascurabile nelle condizioni testate. |
-| **E0+, E1+, E2±, E3? per intervalli ampi o perturbazioni incerte, E4 n.a. sugli indizi di Ellie, E5 solo precisione degli span, E6? o n.a.** | **Sensibilità di un LLM a domande e risposte nelle interviste per la depressione: un'analisi sperimentale.** Non affermare né presenza né assenza di shortcut; riportare con precisione quali confronti restano aperti. |
-| **E0+, E1+, E2±, E3+, E4+, E5−, E6+ o ? o n.a.** | **Analisi meccanicistica della dipendenza di un LLM dagli indizi d'intervista.** L'effetto interno resta un risultato, mentre il lessico non ha superato i metodi di selezione di controllo. Indicare il corpus effettivamente studiato nel sottotitolo. |
-| **E0+, E1+, E2±, E3+ in DAIC-WOZ, E4+ o ?, E5+ o − o ?, E6− in sessioni autonome disgiunte** | **Dipendenza dal protocollo d'intervista e limiti di trasferibilità delle spiegazioni di un LLM tra DAIC-WOZ ed E-DAIC.** Esporre anche quanto delle differenze potrebbe dipendere dalle trascrizioni e dalla composizione dei campioni. |
-| **E0+ per la sola valutazione del lessico, E1? o −, E2–E4 non interpretabili, E5 limitato alla precisione degli span, E6 n.a.** | **Fattibilità di un audit lessicale delle interviste DAIC-WOZ per la predizione della depressione.** È un progetto ridimensionato: il titolo da solo non rende sufficiente una tesi meccanicistica senza un modello predittivo studiabile; occorre ridefinire la domanda scientifica con il relatore. |
+| **E0 — Preparazione di dati e lessico:** split, copertura, accordo e qualità del matcher. | H0, H2: affidabilità della risorsa e dei confronti. |
+| **E1 — Pilot del modello e degli interventi:** prestazioni, replica tecnica, grafo completo/vuoto, memoria e tempi. | H0: condizioni per proseguire e scelta del perimetro sostenibile. |
+| **E2 — Ricerca a budget controllato:** curve costo–fedeltà per strategie e dimensioni del circuito. | H1, H2: efficienza e contributo specifico del lessico. |
+| **E3 — Trasferimento a nuove persone e parafrasi:** circuiti congelati e distanza dagli output originali. | H3: generalizzazione oltre dati e vocabolario di scoperta. |
+| **E4 — Variazioni contestuali:** negazione, tempo e persona, con revisione delle coppie. | H4: riproduzione della sensibilità contestuale del modello. |
+| **E5 — Robustezza del risultato:** repliche, riferimenti alternativi e controlli di copertura/dimensione. | H1, H2: verifica che il vantaggio non sia un artefatto della selezione o del patching. |
+| **E6 — Replica esterna, opzionale:** seconda configurazione o task compatibile. | H3: portata delle conclusioni oltre il primo esperimento. |
 
-La presenza di E6 non valutabile elimina «ed E-DAIC» da qualsiasi titolo che prometta risultati su entrambi i corpus. E7 entra nel titolo solo se eseguito e confermato, per esempio aggiungendo «e mitigazione degli indizi di protocollo» al primo caso. Il titolo iniziale resta appropriato durante lo svolgimento: l'esito finale non è noto in anticipo. Nessun risultato nullo su questo campione autorizza formule generali come «gli LLM non hanno bias».
+## 5. Titoli in base all’output degli esperimenti
 
-La proposta da discutere con il relatore è dunque un **audit delle decisioni del modello guidato da un lessico**, con verifica causale interna come obiettivo principale e scoperta di circuiti completi o mitigazione come possibili sviluppi.
+| Esiti osservati | Titolo finale possibile |
+|---|---|
+| E2 mostra un vantaggio, E3 ne conferma il trasferimento ed E5 ne sostiene la robustezza. | **Scoperta efficiente e generalizzabile di circuiti negli LLM mediante guida lessicale: uno studio su DAIC-WOZ.** |
+| E2 mostra un vantaggio, ma E3 rileva un deterioramento sulle parafrasi. | **Efficienza e limiti di generalizzazione della guida lessicale nella scoperta di circuiti degli LLM.** |
+| E2 ed E5 mostrano un beneficio trascurabile rispetto ai controlli, con intervalli sufficientemente stretti. | **Valore e limiti della guida lessicale nella scoperta di circuiti: una valutazione controllata su DAIC-WOZ.** |
+| Le differenze restano incerte per variabilità o campione limitato. | **Valutazione sperimentale della guida lessicale nella ricerca di circuiti degli LLM su DAIC-WOZ.** |
+| Si adotta il piano alternativo sugli archi, con verifiche di fedeltà e trasferimento. | **Guida lessicale alla selezione di circuiti negli LLM: compattezza, fedeltà e generalizzazione.** |
+| Il task PHQ-8 non supera il pilot e si completa lo studio su un task diverso. | **Il valore della guida lessicale nella scoperta di circuiti per [task effettivamente studiato].** |
+
+I titoli devono riportare il corpus e il comportamento effettivamente analizzati; se si usano estratti, precisarlo nel sottotitolo o nell’abstract. Un pilot non riuscito, da solo, non costituisce il completamento della tesi.
+
+---
+
+<a id="thesis-plan01"></a>
+
+# Thesis-plan01 — Audit degli indizi d’intervista
+
+**Proposta alternativa per la discussione con il relatore.** Sintesi dell’attuale `piano-tesi.md`. L’oggetto è la dipendenza delle predizioni da evidenze del partecipante e indizi del protocollo, con verifica delle componenti interne coinvolte.
+
+## 1. Titolo
+
+### 1.1 Titolo proposto
+
+**Evidenze del partecipante e indizi d’intervista nelle predizioni degli LLM: un audit meccanicistico guidato da lessici su DAIC-WOZ.**
+
+### 1.2 Domanda centrale
+
+In quale misura un LLM usa espressioni del partecipante e indizi del protocollo per predire l’etichetta PHQ-8, quali componenti interne contribuiscono alle dipendenze osservate e quanto il lessico aiuta a individuarle?
+
+### 1.3 Obiettivi e contributo atteso
+
+- Distinguere segnale disponibile nelle domande, suo uso effettivo nel dialogo e contributi delle componenti interne.
+- Valutare se il lessico permette di selezionare interventi più informativi dei controlli.
+- Delimitare la trasferibilità degli effetti fra persone e, se i dati lo consentono, protocolli diversi.
+
+### 1.4 Possibili casi d’uso
+
+- **Revisione di sistemi che analizzano interviste:** individuare formulazioni delle domande cui le predizioni risultano sensibili.
+- **Passaggio a un diverso protocollo:** verificare quali dipendenze rimangano stabili fra interviste guidate e autonome.
+- **Analisi degli errori:** distinguere gli effetti delle risposte del partecipante da quelli della cornice d’intervista.
+
+I risultati supportano un audit sperimentale; non certificano idoneità diagnostica.
+
+## 2. Ipotesi verificabili e domande di ricerca
+
+| Domanda/Ipotesi | Macro area | Esperimento | Esito positivo | Esito negativo |
+|---|---|---|---|---|
+| **H0 — Dati, lessico e modello permettono un audit informativo?** | Fattibilità | E0–E1: qualità dei dati, annotazioni, prestazioni e controlli sensibili. | Categorie affidabili, score non degenere e pipeline verificabile. | Dati insufficienti o modello non studiabile: ridimensionare il task prima delle conclusioni. |
+| **H1 — Le domande contengono segnale predittivo autonomo?** | Segnale nel corpus | E2: Ellie-only, participant-only e baseline semplici su persone separate. | Le domande consentono predizioni superiori ai controlli. | Nessuna evidenza di segnale autonomo; non esclude il loro uso come contesto. |
+| **H2 — Il modello sul dialogo completo usa gli indizi manipolati?** | Dipendenza dal protocollo | E3: modifiche coerenti delle domande, risposte invariate e controlli abbinati. | Effetto sullo score replicabile e superiore ai controlli. | Effetto trascurabile entro la precisione prefissata; con intervalli ampi l’esito è inconcludente. |
+| **H3 — Alcuni siti interni contribuiscono alla dipendenza osservata?** | Meccanismi interni | E4: patching bidirezionale e ablazioni, su siti selezionati fuori dal test. | Effetti direzionali superiori ai controlli, replicati su nuove persone. | Nessun sito confermato; se E3 è privo di contrasto, la verifica è non applicabile a quelle coppie. |
+| **H4 — Il lessico migliora la selezione di casi e siti da verificare?** | Utilità del lessico | E5: selezione lessicale, casuale abbinata e attribuzioni, a budget controllato. | Più effetti confermati su dati nuovi o costo inferiore per trovarli. | Nessun vantaggio pratico, oppure beneficio limitato alla classificazione degli span. |
+| **H5 — Gli effetti si trasferiscono a un altro protocollo?** | Generalizzazione | E6: replica su sessioni autonome E-DAIC disgiunte. | Effetti compatibili nelle condizioni confrontabili. | Eterogeneità o mancato trasferimento; dati insufficienti rendono l’ipotesi non valutabile. |
+| **H6 — Una mitigazione mirata riduce la dipendenza?** | Robustezza, opzionale | E7: intervento su dati o modello e ripetizione dell’audit. | Dipendenza ridotta con prestazioni preservate entro una tolleranza prefissata. | Dipendenza invariata, perdita predittiva eccessiva o effetto non replicabile. |
+
+H2–H4 costituiscono il nucleo; H1 descrive il segnale disponibile. H5 e H6 sono estensioni. Un risultato positivo di H2 dimostra sensibilità agli indizi studiati: chiamarla *shortcut* richiede escludere che si tratti di contesto legittimamente informativo.
+
+## 3. Stack tecnico
+
+### 3.1 Dataset
+
+- **DAIC-WOZ:** trascrizioni inglesi, ruoli di Ellie e partecipante, etichetta ufficiale associata al PHQ-8. [Fonte ufficiale](https://dcapswoz.ict.usc.edu/).
+- **E-DAIC, opzionale:** utilizzare sessioni autonome solo dopo verifica di sovrapposizioni, trascrizioni, ruoli e label. Documentare differenze nella qualità delle trascrizioni e nella composizione dei campioni. [Manuale E-DAIC](https://dcapswoz.ict.usc.edu/wwwedaic/E-DAIC%20Manual.pdf).
+- Split per partecipante e separazione fra eventuale training, scelta di prompt/soglie, localizzazione dei siti e conferma finale. Tutte le varianti di un’intervista rimangono nello stesso split.
+- Le perturbazioni devono conservare referenti e coerenza domanda–risposta. Rimuovere una domanda cui segue «yes» non costituisce un controllo adeguato.
+- Se si usano estratti per limiti di memoria, selezionarli con una regola indipendente dagli esiti e dichiarare che l’audit riguarda tali input.
+
+### 3.2 Task del modello e ambiente
+
+**Task principale:** classificazione binaria PHQ-8 con un LLM aperto e congelato durante l’audit. Un adattamento LoRA sul training è possibile se necessario; non costituisce da solo il contributo scientifico.
+
+Confrontare quattro condizioni:
+
+| Condizione | Che cosa consente di osservare |
+|---|---|
+| Participant-only | Segnale disponibile nelle risposte. |
+| Ellie-only | Segnale disponibile nelle domande. |
+| Dialogo completo | Comportamento del predittore oggetto dell’audit. |
+| Dialogo con modifiche controllate | Sensibilità del medesimo predittore agli indizi manipolati. |
+
+Per E2 usare anche classificatori semplici, dichiarando quali siano addestrati separatamente per condizione. La loro prestazione misura il segnale nel corpus. Per E3 usare invece lo stesso checkpoint e lo stesso prompt, modificando soltanto il testo previsto dal protocollo.
+
+Definire `s(x)` come differenza fra i logits dei due simboli di classe; congelare la soglia sul development. Baseline: classe maggioritaria, TF-IDF e conteggi lessicali con regressione logistica regolarizzata.
+
+**Ambiente previsto:** Python, PyTorch, Transformers, PEFT se necessario, strumenti di patching compatibili con il modello, scikit-learn e pandas. Partire da un modello piccolo e da pochi layer; valutare tempi e memoria prima di approfondire teste di attenzione o MLP.
+
+### 3.3 Explainability, lessico e confronti
+
+#### 3.3.1 Sviluppo del lessico specializzato
+
+Costruire una risorsa inglese con tre famiglie distinte:
+
+| Famiglia | Esempi di categorie | Funzione |
+|---|---|---|
+| Espressioni sintomatologiche | Umore, interesse, sonno, energia, concentrazione | Selezionare evidenze del partecipante e controlli pertinenti. |
+| Storia clinica e trattamento | Diagnosi riferite, terapia, farmaci, episodi passati | Distinguere contenuti storici e informazioni attuali. |
+| Indizi d’intervista | Approfondimenti, domande su trattamento, transizioni tematiche | Individuare formulazioni del protocollo da sottoporre ad audit. |
+
+Un LLM può generare candidati e parafrasi da definizioni e dati di training. Persone revisionano inclusione e categoria; conservare fonte, prompt, versione, regole di matching e modifiche. Annotare un campione separato per categoria, speaker, negazione, temporalità e persona cui l’esperienza si riferisce.
+
+Misurare accordo fra annotatori, precisione/recall e copertura del matcher. Il lessico non entra come feature nel predittore principale; alimenta solo una baseline distinta e la selezione degli interventi. Una categoria non rende automaticamente un’espressione informativa o spuria.
+
+#### 3.3.2 Localizzazione e verifica interna
+
+1. **Occlusione e attribuzioni mediante gradienti:** individuare span candidati, mantenendo la cancellazione grezza come stress test quando compromette il dialogo.
+2. **Coppie controllate:** riformulare indizi di Ellie mantenendo le risposte, con revisione della coerenza e controlli di lunghezza, posizione e intensità della modifica. Studiare separatamente le perturbazioni delle evidenze del partecipante.
+3. **Activation patching bidirezionale:** trasferire attivazioni fra originale e variante, inizialmente in pochi layer e alla posizione finale di predizione. Per token intermedi richiedere allineamento esplicito.
+4. **Ablazioni mirate e controlli:** verificare i siti selezionati su persone nuove; distinguere l’effetto di siti specifici da un disturbo generico del modello.
+
+La scelta di coppie, siti e riferimenti condiziona le conclusioni. [Zhang e Nanda, 2024](https://arxiv.org/abs/2309.16042). Probe lineari e spiegazioni verbali possono generare ipotesi, ma non sono necessari al nucleo e non provano l’uso causale dell’informazione.
+
+#### 3.3.3 Confronti e posizionamento
+
+Per valutare il lessico, confrontare selezione lessicale, casuale abbinata e attribuzioni generiche, usando budget comparabili per span, siti e interventi. La misura principale è la frequenza di effetti interni confermati su dati nuovi; la sola frequenza di cambiamenti dell’output può premiare perturbazioni troppo distruttive.
+
+Il segnale dell’intervistatore ha un precedente diretto in [Burdisso et al., 2024](https://arxiv.org/abs/2404.14463); esistono inoltre lavori sulla [mitigazione del bias dell’intervistatore](https://aclanthology.org/2025.findings-emnlp.650/). Il contributo candidato è distinguere disponibilità, uso nel LLM e contributo interno, misurando il vantaggio specifico del lessico.
+
+### 3.4 Analisi quantitative
+
+- **Predizione:** macro-F1, precision/recall della classe positiva, balanced accuracy e confronto con baseline.
+- **Lessico:** accordo fra annotatori, precisione/recall per categoria, copertura e analisi degli errori contestuali.
+- **Dipendenza comportamentale:** `Δs = s(originale) − s(variante)`, frequenza dei cambi di classe e confronto con perturbazioni abbinate.
+- **Contributo interno:** `P = s(variante con patch) − s(variante)`, direzione dell’effetto e distanza residua dallo score sorgente. Il rapporto `P/Δs` si usa solo sopra una soglia di contrasto fissata sul development; riportare anche gli effetti grezzi e i casi esclusi.
+- **Valore della guida:** quota di effetti confermati, replica fra persone e costo per ottenere una conferma, includendo selezione e verifica.
+- **Incertezza:** confronti appaiati, bootstrap per partecipante, soglie di rilevanza prefissate e repliche. Non equiparare molte varianti di una persona a molti soggetti indipendenti.
+
+Un’elevata prestazione Ellie-only non prova che il predittore sul dialogo completo usi gli stessi indizi. Se E3 non produce contrasti informativi, E4 su quelle coppie non dimostra assenza di meccanismi. Se E3 è informativo ma E4 fallisce, resta il risultato comportamentale senza una localizzazione interna confermata.
+
+### 3.5 Perimetro e piano alternativo
+
+Il nucleo richiede E0–E5. E6 dipende dai dati; E7 si attiva solo dopo una dipendenza replicabile. Se il calcolo è oneroso, limitare il patching a pochi layer e alla posizione finale. Se gli effetti delle domande sono trascurabili con controlli sensibili, approfondire le evidenze del partecipante come domanda distinta, senza sostenere che siano state trovate shortcut. Se modello o interventi non superano il pilot, riformulare il task o la portata dell’audit con il relatore.
+
+## 4. Esperimenti da realizzare
+
+| Nome esperimento | A quale Ipotesi/Domanda risponde |
+|---|---|
+| **E0 — Dati e lessico:** split, sovrapposizioni, annotazioni contestuali e qualità del matcher. | H0, H4: risorsa utilizzabile e base per confrontare le selezioni. |
+| **E1 — Modello predittivo e controlli sensibili:** prestazioni, stabilità e risposta a modifiche pertinenti del partecipante. | H0: condizioni per interpretare l’audit. |
+| **E2 — Segnale nelle domande:** Ellie-only, participant-only e baseline su persone separate. | H1: disponibilità del segnale nel corpus. |
+| **E3 — Uso degli indizi nel dialogo:** variazioni coerenti delle domande e controlli abbinati. | H2: dipendenza effettiva del predittore dagli indizi manipolati. |
+| **E4 — Verifica interna:** patching bidirezionale e ablazioni dei siti candidati. | H3: contributo dei siti alla differenza osservata in E3. |
+| **E5 — Valore aggiunto del lessico:** confronto con casuale abbinato e attribuzioni a budget controllato. | H4: utilità nella selezione di casi e siti confermati. |
+| **E6 — Trasferimento a E-DAIC, opzionale:** replica su sessioni autonome disgiunte e confrontabili. | H5: trasferibilità e differenze tra protocolli. |
+| **E7 — Mitigazione mirata, opzionale:** intervento sui segnali individuati e ripetizione dell’audit. | H6: riduzione della dipendenza con prestazioni preservate. |
+
+## 5. Titoli in base all’output degli esperimenti
+
+| Esiti osservati | Titolo finale possibile |
+|---|---|
+| E3 ed E4 confermano la dipendenza e i siti; E5 mostra un vantaggio del lessico. | **Audit meccanicistico guidato da lessici della dipendenza di un LLM dagli indizi d’intervista su DAIC-WOZ.** |
+| E3 conferma la sensibilità, ma E4 non identifica siti robusti. | **Sensibilità delle predizioni PHQ-8 di un LLM agli indizi d’intervista: un audit controllato su DAIC-WOZ.** |
+| E3 ed E4 sono positivi, ma E5 non mostra un vantaggio del lessico. | **Analisi meccanicistica della dipendenza di un LLM dagli indizi d’intervista.** |
+| E3 rileva effetti trascurabili con intervalli stretti e controlli sensibili; E4 sulle domande è non applicabile. | **Limiti della dipendenza dagli indizi d’intervista nelle predizioni di un LLM su DAIC-WOZ.** |
+| E3 resta inconcludente per variabilità o qualità delle perturbazioni. | **Sensibilità alle formulazioni d’intervista nelle predizioni PHQ-8: uno studio sperimentale.** |
+| E6 evidenzia effetti diversi nei due protocolli. | **Dipendenza dal protocollo e trasferibilità degli effetti di intervento negli LLM su DAIC-WOZ ed E-DAIC.** |
+| E7 conferma una riduzione della dipendenza preservando le prestazioni. | **Analisi e mitigazione della dipendenza dagli indizi d’intervista in un LLM per la predizione PHQ-8.** |
+
+Citare E-DAIC nel titolo solo se è stato effettivamente valutato. Usare «shortcut» solo quando i controlli sostengono tale interpretazione. Se il pilot fallisce, occorre ridefinire il progetto: cambiare il titolo non sostituisce gli esperimenti mancanti.
