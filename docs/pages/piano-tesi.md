@@ -1,6 +1,6 @@
 ---
 title: Piani di tesi — proposte 00 e 01
-permalink: /piano-tesi-new/
+permalink: /
 description: Due proposte per la discussione con il relatore, dalla scoperta di circuiti guidata da lessici all’audit degli indizi d’intervista.
 ---
 

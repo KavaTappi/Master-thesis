@@ -34,6 +34,16 @@ jobs:
           destination: ./_site
           future: true
 
+      - name: Verifica le pagine prima della pubblicazione
+        shell: bash
+        run: |
+          for page in index.html piano-tesi-new/index.html settimane/index.html assets/css/styles.css; do
+            if [ ! -s "_site/$page" ]; then
+              echo "::error::File mancante o vuoto nel sito generato: $page"
+              exit 1
+            fi
+          done
+
       - name: Carica il sito
         uses: actions/upload-pages-artifact@v3
         with:
