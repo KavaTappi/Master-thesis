@@ -12,8 +12,6 @@ description: Due proposte per la discussione con il relatore, dalla scoperta di 
 
 # Thesis-plan00 — Guida lessicale alla scoperta dei circuiti
 
-**Proposta prioritaria per la discussione con il relatore.** Sintesi di `proposta-carman00.md`, aggiornata con i chiarimenti su fedeltà, costo e piani alternativi. Le ipotesi e i titoli finali non anticipano risultati sperimentali.
-
 ## 1. Titolo
 
 ### 1.1 Titolo proposto
@@ -150,8 +148,6 @@ I titoli devono riportare il corpus e il comportamento effettivamente analizzati
 <a id="thesis-plan01"></a>
 
 # Thesis-plan01 — Audit degli indizi d’intervista
-
-**Proposta alternativa per la discussione con il relatore.** Sintesi dell’attuale `piano-tesi.md`. L’oggetto è la dipendenza delle predizioni da evidenze del partecipante e indizi del protocollo, con verifica delle componenti interne coinvolte.
 
 ## 1. Titolo
 
