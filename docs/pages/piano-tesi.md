@@ -24,23 +24,8 @@ La proposta combina tre elementi:
 
 Il lessico diventa quindi uno **strumento per formulare e verificare ipotesi sul modello**, oltre che una baseline interpretabile.
 
-### 1.1 - Cosa non assume
-
-Non si assume che una parola clinicamente plausibile corrisponda a un neurone, né che un modello che la usa stia effettuando un ragionamento clinico corretto.
-
-### 1.2 - Dove collocare l'originalità
-
-La domanda ancora aperta, per la configurazione proposta, è più specifica: **quando un LLM generativo legge l'intero colloquio, usa davvero indizi introdotti dal protocollo per stimare l'etichetta associata al PHQ-8? Se sì, quali sue componenti mediano l'effetto e un lessico specializzato aiuta a individuarle?**
-
-| Filone e risultato già pubblicato | Questione che resta aperta per questa tesi | Aggiunta verificabile nella pipeline |
-|---|---|---|
-| [Burdisso et al. (2024)](https://aclanthology.org/2024.clinicalnlp-1.8/) mostrano scorciatoie legate alle domande di Ellie; [Watawana et al. (2026)](https://aclanthology.org/2026.lrec-1.185/) estendono l'analisi a E-DAIC e ANDROIDS. | Il fatto che le sole domande predicano l'etichetta (PH8 < baseline o maggiore) non stabilisce che **un determinato LLM, quando legge domande e risposte insieme**, le usi per decidere. | Separare il controllo *Ellie-only* (E2) dalla modifica controllata delle domande nel dialogo completo, lasciando invariato il contenuto del partecipante e verificando la coerenza del dialogo (E3). Misurare la variazione dello score rispetto a parafrasi e interventi di controllo. |
-| [Lee et al. (2026)](https://pmc.ncbi.nlm.nih.gov/articles/PMC12885269/) estraggono con un LLM fattori interpretabili per stimare il PHQ-8; [RED](https://aclanthology.org/2025.findings-acl.517/) recupera passaggi di intervista come evidenze per spiegazioni. | Un fattore leggibile o un passaggio citato non identifica da solo ciò da cui dipende il calcolo interno del modello oggetto dell'audit. | Collegare i cambiamenti comportamentali di E3 a interventi sulle attivazioni dello **stesso modello predittivo** (E4), confrontando siti candidati e siti di controllo. |
-| [Low et al. (2026)](https://pubmed.ncbi.nlm.nih.gov/42782714/) costruiscono un lessico assistito da LLM per il rischio suicidario; [Villatoro-Tello et al. (2021)](https://publications.idiap.ch/publications/show/4652) e [Milintsevich et al. (2024)](https://aclanthology.org/2024.clinicalnlp-1.28/) studiano lessici o marcature lessicali per la depressione nelle interviste. | Non sappiamo se un lessico adattato a **sintomi, storia clinica e indizi dell'intervistatore** sia utile per progettare interventi meccanicistici, oltre che come feature o baseline predittiva. | Costruire e revisionare il lessico; confrontare selezione guidata dal lessico, selezione casuale abbinata e attribuzioni generiche **a parità di span e interventi** (E0, E5). Misurare precisione delle categorie ed effetti interni trovati e replicati per unità di budget. |
-| [Ahsan et al. (2025)](https://aclanthology.org/2025.findings-emnlp.789/) usano già interventi interni per studiare bias demografici in LLM sanitari; [Yeo et al. (2025)](https://aclanthology.org/2025.emnlp-main.529/) studiano la fedeltà delle spiegazioni con patching; [Zhang e Nanda (2024)](https://proceedings.iclr.cc/paper_files/paper/2024/hash/06a52a54c8ee03cd86771136bc91eb1f-Abstract-Conference.html) mostrano che metrica e perturbazione incidono sulla localizzazione. | Questi metodi non risolvono automaticamente il caso delle interviste, **in cui domanda, risposta e posizione nel colloquio sono intrecciate**. | Costruire coppie di dialoghi plausibili, eseguire patching in entrambe le direzioni e confrontare ablazioni e siti di controllo su partecipanti tenuti fuori dalla selezione dei siti (E3, E4).  |
-
 ---
-### 1.2 - Dove collocare l'originalità cont'd
+### 1.1 - Dove collocare l'originalità cont'd
 
 L'**oggetto scientifico principale** è dunque distinguere tre livelli che spesso vengono confusi: 
 - **segnale disponibile nel corpus** (E2),
@@ -91,19 +76,7 @@ H1–H3 costituiscono il nucleo. H4 dipende dalla disponibilità effettiva di tr
 
 Usare come task principale la predizione dell'**etichetta binaria ufficiale associata al PHQ-8**, verificandone la codifica nella release disponibile. 
 
-#### 3.1.1 - Esempio di costruzione del modello
-
-- Scegliere un modello open 1-8B params, dopo un pilot su memoria, lunghezza delle interviste, accesso alle attivazioni e qualità predittiva.
-- Impostare un prompt fisso e due risposte di classe; usare come score la differenza dei logits se le risposte sono token singoli verificati, oppure la differenza delle log-probabilità delle sequenze. *(Questo score permette confronti continui anche quando la classe predetta non cambia; non è automaticamente una probabilità clinicamente calibrata.)*
-- **Provare prima il modello senza adattamento al corpus.** 
-**Se il segnale è insufficiente,** prevedere un adattamento leggero sul solo training, mantenendo il checkpoint iniziale come controllo.
-*(Per sostenere che lo shortcut viene **appreso nel fine-tuning**, occorre confrontare prima e dopo: la sola dipendenza osservata in un modello già addestrato non ne identifica l'origine.)*
-
-- Gestire le interviste lunghe con una regola fissata prima degli esperimenti. Preferire l'intero testo se sostenibile; altrimenti usare finestre e aggregazione dichiarate, senza trasferire le label d'intervista alle singole finestre come verità cliniche. Evitare riassunti generati come preprocessing principale, perché introdurrebbero un secondo modello da spiegare.
-
-**Attenzione :** *Il riferimento sperimentale è il questionario disponibile nel corpus: non equivale a una diagnosi psichiatrica indipendente né a una valutazione del rischio suicidario.*
-
-#### 3.1.2 - Confronti principali
+#### 3.1.1 - Confronti principali
 
 - **Participant-only:** solo risposte del partecipante.
 - **Ellie-only:** solo domande dell'intervistatore, come controllo del segnale predittivo del protocollo.
@@ -130,19 +103,6 @@ Costruire un lessico in inglese, coerente con la lingua delle interviste, con tr
 | Indizi dell'intervista | formule di approfondimento, domande su diagnosi/trattamento, transizioni tematiche | Individuare possibili segnali del protocollo |
 
 Queste famiglie sono **categorie di analisi**, non classi di parole automaticamente «buone» o «spurie». La stessa espressione cambia significato a seconda di chi parla, della negazione e del riferimento temporale. Una diagnosi passata riferita dal partecipante è informazione reale, pur non coincidendo necessariamente con lo stato attuale.
-
-### Procedura operativa proposta per generazione lessico
-*(praticamente la stessa del paper sui lessici)*
-1. Definire ciascun costrutto, i criteri di inclusione/esclusione e pochi esempi iniziali, concordandoli con il relatore e possibilmente con un esperto clinico.
-2. Far generare a un LLM parole, espressioni multi-parola, parafrasi e casi ambigui. Registrare modello, versione, prompt e parametri; evitare che il modello generatore veda le label di valutazione.
-3. Revisionare i candidati; adattarli esclusivamente sul training. Conservare separatamente il lessico iniziale e quello adattato al corpus.
-4. Annotare su un campione di passaggi presenza del costrutto, parlante, negazione, temporalità e riferimento a sé/altri. Non assegnare a ogni frase la label PHQ-8 dell'intera intervista.
-5. Far valutare almeno un sottoinsieme a due annotatori e misurare accordo, precisione e copertura rispetto alle annotazioni. Per dichiarare validità clinica serve competenza clinica; senza di essa parlare di lessico sperimentale revisionato.
-6. Congelare la versione finale prima del test e conservarne provenienza, modifiche ed esclusioni.
-
-Il matcher può combinare espressioni lessicali e regole contestuali esplicite. I suoi errori vanno misurati: «I feel depressed» e «I do not feel depressed» non devono diventare automaticamente la stessa evidenza.
-
-Nel disegno principale il lessico **non viene inserito nel prompt del predittore**: guida annotazione e interventi dall'esterno. Inserirlo nel prompt cambierebbe il sistema studiato e richiederebbe una condizione sperimentale separata.
 
 
 ## 4. Tecniche di explainability e nucleo meccanicistico
@@ -176,45 +136,9 @@ Il patching sostituisce attivazioni di una computazione con quelle ottenute da u
 
 Per rendere la misura trasparente, definire `s(x)` come score della classe positiva. L'effetto primario del patching è `s(variante con patch) - s(variante)`. Un recupero normalizzato può essere calcolato dividendo per `s(originale) - s(variante)`, solo quando il denominatore supera una soglia stabilita sul development. Riportare sempre anche gli effetti non normalizzati e i casi esclusi dal rapporto.
 
-### Conferma e limiti dell'interpretazione
-
-Confermare i siti selezionati mediante interventi inversi e ablazioni con attivazioni di riferimento; includere controlli casuali e siti di pari dimensione. Confrontare più varianti linguistiche per ridurre la dipendenza da una particolare perturbazione. Le linee guida sul patching aiutano a distinguere evidenza locale e affermazioni più forti sui circuiti. [Heimersheim e Nanda, 2024](https://arxiv.org/abs/2404.15255).
-
-**Esempi di conferma:**
-
-| Tecnica | Esperimento esemplificativo | Interpretazione prudente |
-|---|---|---|
-| **Patching inverso** | Inserire nella computazione sul dialogo originale l'attivazione della variante e verificare se lo score si muove nella direzione opposta. | Un effetto nelle due direzioni rafforza l'interpretazione del sito; non elimina i confondenti della coppia di input. |
-| **Ablazione di una head o di un MLP** | Sostituire l'uscita di una componente candidata con un'attivazione di riferimento appropriata e confrontare il cambiamento con componenti casuali della stessa dimensione. | Se l'effetto è selettivo e replicabile, la componente contribuisce al comportamento studiato; un'ablazione può però creare attivazioni poco naturali. |
-| **Path patching** | Dopo aver individuato componenti candidate, trasferire solo il contributo di una head a un MLP successivo e verificare se cambia lo score. | Può testare un collegamento candidato tra componenti; richiede un protocollo più complesso e non è necessario nel nucleo minimo. |
-| **Sparse autoencoder (SAE)** | Cercare una feature latente che si attivi nelle domande di approfondimento e intervenire su quella feature, confrontando lo score e la fedeltà della ricostruzione. | Una feature nominabile può aiutare a formulare l'ipotesi, ma il suo nome non ne prova la funzione causale; serve verifica mediante intervento. |
-
-Un effetto nel residual stream mostra che quel sito trasporta informazione rilevante nel confronto: non basta per nominarlo «circuito della depressione». L'obiettivo minimo è identificare **componenti che mediano una dipendenza specifica**, con replica su partecipanti non usati per selezionarle. Per parlare di circuito occorrono ulteriori evidenze sui collegamenti e sulla loro funzione, eventualmente tramite path patching.
-
-Sparse autoencoder e analisi di feature latenti restano un'estensione facoltativa, preferibilmente solo se esistono risorse compatibili con il checkpoint. Addestrarne uno da zero non è necessario per completare questa tesi (e nanche feasible).
-
----
-#### Esempio:
-
-1. **Verificare che il fenomeno sia osservabile.** Valutare un dialogo completo e un controllo *Ellie-only*. Se Ellie-only predice la label, le domande contengono segnale nel corpus; ciò non dimostra che l'LLM sul dialogo completo lo usi. Se il dialogo completo ha prestazioni quasi casuali o output instabili, la mancata sensibilità alle domande è poco informativa.
-
-2. **Costruire coppie valide.** Modificare formule di Ellie che il lessico classifica come possibili indizi, conservando le risposte del partecipante e verificando leggibilità e coerenza. Includere diverse domande, parafrasi, posizioni nell'intervista, partecipanti e gruppi PHQ-8. Usare controlli con modifiche di lunghezza e posizione comparabili.
-
-3. **Misurare l'effetto comportamentale.** Per ogni coppia calcolare la differenza dello score `s(originale) - s(variante)` e l'eventuale cambio di classe; esaminare sia gli effetti medi sia la distribuzione dei valori assoluti e delle differenze per sottogruppo, perché effetti opposti possono annullarsi nella media. Il confronto dialogo completo/participant-only è un controllo aggiuntivo, ma cambia molto l'input e non isola da solo la causa.
-
-4. **Confermare che il test abbia sensibilità.** Verificare su coppie separate e sensate che lo stesso modello reagisca a cambiamenti pertinenti nelle affermazioni del partecipante; controllare che l'intervento tecnico cambi l'output quando si agisce su un sito con effetto noto o su un controllo positivo. Se non reagisce a nulla, un risultato nullo sulle domande non è interpretabile.
-
-5. **Stabilire che cosa significhi «effetto trascurabile».** Prima del test finale definire sul development una soglia minima di effetto rilevante per la media dei valori assoluti di `s(originale) - s(variante)` e/o per la frequenza di cambi di classe. Sul campione finale calcolare intervalli d'incertezza con bootstrap per partecipante, anche per i sottogruppi prespecificati che hanno abbastanza dati. Si può sostenere una dipendenza inferiore alla soglia testata soltanto se il limite superiore dell'intervallo della misura prescelta resta sotto quella soglia. Un valore non significativo con intervallo ampio significa *evidenza insufficiente*, non indipendenza.
 
    
 ---
-
-## 5 - Se non emerge una dipendenza dal protocollo?
-
-Se i punti precedenti reggono, si può scrivere: «**Per questo LLM, su questi dati e sulle perturbazioni verificate, non abbiamo trovato una dipendenza dal protocollo d'intervista di entità almeno pari alla soglia prefissata**».
-La presenza di segnale in Ellie-only assieme a questa conclusione sarebbe particolarmente interessante: distinguerebbe il segnale disponibile nel corpus da quello usato dal predittore sul dialogo completo. 
-
-Se i confronti comportamentali non mostrano differenze affidabili, il patching su quelle stesse coppie non può localizzare una mediazione di uno spostamento assente; **si possono invece studiare, come obiettivo alternativo, gli effetti degli interventi sulle evidenze del partecipante.**
 
 ## 6. Valutazione, fattibilità e risultati attesi
 
@@ -264,23 +188,3 @@ E2 ed E3 rispondono a domande differenti: **informazione presente nelle domande*
 La presenza di E6 non valutabile elimina «ed E-DAIC» da qualsiasi titolo che prometta risultati su entrambi i corpus. E7 entra nel titolo solo se eseguito e confermato, per esempio aggiungendo «e mitigazione degli indizi di protocollo» al primo caso. Il titolo iniziale resta appropriato durante lo svolgimento: l'esito finale non è noto in anticipo. Nessun risultato nullo su questo campione autorizza formule generali come «gli LLM non hanno bias».
 
 La proposta da discutere con il relatore è dunque un **audit delle decisioni del modello guidato da un lessico**, con verifica causale interna come obiettivo principale e scoperta di circuiti completi o mitigazione come possibili sviluppi.
-
-## 8. Piano di riserva: fedeltà causale delle evidenze del partecipante
-
-Questa seconda proposta conserva dataset, modello predittivo, lessico, annotazioni contestuali e strumenti di intervento. Cambia l'oggetto dell'audit: **dalle domande di Ellie alle affermazioni del partecipante**. È una scelta motivata se il modello predice in modo abbastanza stabile (E1), ma le modifiche controllate alle domande non producono effetti studiabili (E3) oppure non consentono una verifica interna solida (E4). Un risultato nullo di E3, se ben misurato, resta comunque un risultato da riportare. Se invece E1 fallisce o il patching non è tecnicamente sostenibile, questa proposta non risolve da sola il problema di fattibilità.
-
-**Titolo provvisorio:** *Dalle parole del partecipante alla predizione: fedeltà causale delle spiegazioni di un LLM su DAIC-WOZ*.
-
-**Domanda centrale:** quando l'LLM cita un'espressione del partecipante per motivare la propria stima dell'etichetta associata al PHQ-8, quell'espressione contribuisce effettivamente alla predizione? Il modello distingue sintomi attuali da riferimenti al passato, negazioni o descrizioni di altre persone?
-
-Il protocollo minimo, da fissare prima della valutazione finale, è il seguente:
-
-1. **Predizione e spiegazione.** Usare un LLM a pesi accessibili con le sole battute del partecipante, uno score continuo per il task e l'indicazione di brevi passaggi citati come evidenza. Confrontarlo con baseline semplici e controllare la stabilità delle risposte.
-2. **Lessico e annotazione.** Usare le otto aree del PHQ-8 come struttura iniziale per le espressioni sintomatologiche; annotare su un campione il passaggio, il parlante, la negazione, il riferimento temporale e se l'esperienza riguarda il partecipante. Le menzioni testuali non sono automaticamente punteggi dei singoli item PHQ-8. Se nella release sono disponibili le risposte agli item, valutarle in un'analisi separata.
-3. **Interventi sul testo.** Costruire varianti minime e plausibili di passaggi citati e non citati, preservando per quanto possibile il resto del colloquio. Per esempio, distinguere «ho problemi di sonno ultimamente» da «avevo problemi di sonno anni fa»; far controllare a persone che la modifica cambi il costrutto previsto senza rendere incoerente l'intervista. Misurare la variazione dello score, non soltanto i cambi di classe.
-4. **Verifica interna.** Sulle coppie con effetto comportamentale, applicare patching in entrambe le direzioni e confrontare siti candidati e siti di controllo su partecipanti non usati per sceglierli. Chiedersi se gli interventi sulle attivazioni concordano con i passaggi citati; un passaggio plausibile ma causalmente irrilevante non è una spiegazione fedele di quella predizione.
-5. **Confronto del lessico.** A parità di numero di passaggi e di interventi, confrontare la selezione guidata dal lessico con passaggi casuali abbinati e metodi generici di attribuzione. Valutare sia la qualità delle categorie annotate sia la frequenza di effetti comportamentali e interni replicabili.
-
-Il risultato originale cercato è la **corrispondenza, o discrepanza, fra evidenza citata, cambiamento della predizione e contributo interno del modello** in interviste sulla depressione. [Lee et al. (2026)](https://pmc.ncbi.nlm.nih.gov/articles/PMC12885269/) propongono fattori interpretabili, [RED](https://aclanthology.org/2025.findings-acl.517/) recupera passaggi come evidenza e [Yeo et al. (2025)](https://aclanthology.org/2025.emnlp-main.529/) studiano la fedeltà causale delle spiegazioni tramite patching. La proposta non rivendica l'invenzione di questi metodi: ne verifica l'utilità con controlli su negazione, temporalità e attribuzione dei sintomi in questo corpus. L'etichetta PHQ-8 riguarda l'intervista/persona, non certifica il significato clinico di una singola frase; gli interventi spiegano il comportamento del modello, non le cause della depressione.
-
-**Punto di decisione:** valutare la fattibilità delle due domande sul training/development, concordare con il relatore criteri e perimetro del passaggio e conservare un insieme finale separato. Se la seconda proposta diventa la tesi principale, riscrivere titolo, ipotesi e analisi primaria intorno alle evidenze del partecipante, riportando gli esiti già ottenuti sulle domande di Ellie senza presentarli come ipotesi confermate a posteriori.
