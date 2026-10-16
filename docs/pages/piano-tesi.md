@@ -4,15 +4,143 @@ permalink: /
 description: Due proposte per la discussione con il relatore, dalla scoperta di circuiti guidata da lessici all’audit degli indizi d’intervista.
 ---
 
+<a id="english"></a>
+
+**Language / Lingua:** [English](#english) · [Italiano](#italiano)
+
+# Thesis plans for discussion with the supervisor
+
+## 1. Introduction
+
+### 1.1 Proposed title
+
+**The value of lexical guidance in LLM circuit discovery: cost, faithfulness, and generalization on DAIC-WOZ interviews.**
+
+### 1.2 Main research question
+
+Given the same resources and circuit size, does a lexicon help identify circuits that more faithfully reproduce an LLM’s PHQ-8 predictions, while preserving this faithfulness on unseen participants and paraphrases?
+(Compared with global, random, and other forms of guidance.)
+
+### 1.3 Objectives and expected contribution
+
+- Design a lexicon-based prioritization strategy for circuit search and compare it with global, random, and salience-based guidance.
+- **Is a lexicon a better guide for starting the search for circuits?**
+- Measure the added value of the lexicon in terms of cost, faithfulness, and transfer in the discovered circuits, compared with those examined initially.
+- Produce a reproducible protocol that also documents conditions under which the guidance is ineffective, as well as its limitations.
+
+## 2. Testable hypotheses and research questions
+
+| Question/Hypothesis | Main area | Experiment | Positive outcome | Negative outcome |
+|---|---|---|---|---|
+| **H0 — Can the system be studied with the available resources?** | Feasibility | E0–E1: data, lexicon, model, and intervention checks. | Usable inputs and categories. | Not feasible. |
+| **H1 — Does lexical guidance improve the cost–faithfulness trade-off?** | Efficiency | E2: comparison of error curves with circuit size controlled; E5: robustness. For example, set a time budget and check whether circuits discovered using lexical guidance have lower error than those discovered using other selection rationales. The focus is therefore primarily on performance. | Lower error at the same cost, or lower cost at the same tolerance, including screening. | No practical advantage, or additional costs that exceed the savings. |
+| **H2 — Does the advantage depend on lexical information?** | Specificity | E0, E2, and E5: comparison with **matched random masks** (randomly selected tokens) and **token salience** (tokens to which the output is most sensitive), with comparable coverage. Essentially, this assesses how useful the lexicon is relative to the other baselines. | Lexical guidance outperforms the controls according to a predefined measure. | The controls reproduce the advantage, or it is explained by the frequency, position, and number of selected tokens. This is still useful information. |
+| **H3 — Do the circuits remain faithful beyond the discovery examples?** | Generalization | E3: unseen participants and paraphrases; E6: optional external replication. | The increase in error remains within a tolerance set on the development set, and the advantage is preserved. This would be a strong result: a mechanism that generalizes has been identified. | Faithfulness or the advantage deteriorates, especially beyond the initial vocabulary. |
+| **H4 — Does the circuit reproduce the model’s contextual sensitivity?** | Context | E4: negation, temporality, and the person whose experience is being described. | The circuit reproduces changes in the full model’s score. | The circuit loses contextual distinctions present in the model. |
+
+**Interpretation rule:** wide intervals yield an inconclusive result, not evidence of no effect. H1 is the primary hypothesis; H2 and H3 define the scope of its interpretation. H4 is a secondary investigation.
+
+## 3. Technical stack
+
+### 3.1 Dataset
+
+- **DAIC-WOZ:** English transcripts, speaker roles, and the official binary label associated with PHQ-8, verified in the available release. [Official source](https://dcapswoz.ict.usc.edu/).
+- Split any training data, discovery data, development data, and final evaluation data by participant. All variants from one person remain in the same split; if the official test set cannot be used, explicitly report that the evaluation is internal.
+- The model receives the same dialogue across all search strategies. The lexicon initially marks the participant’s responses.
+- If the full context is too costly, use deterministic excerpts distributed throughout the dialogue, selected independently of the lexicon and label. In that case, the explanations concern predictions made on those excerpts.
+- Create reviewed paraphrases that avoid the entries used for guidance. Where possible, keep families of expressions separate between discovery and validation.
+- Optional external replication on a simple text task or on compatible, disjoint data. E-DAIC requires checks for overlap and protocol compatibility.
+
+### 3.2 Model task and environment
+
+**Main task:** prediction of the binary PHQ-8 class using a small LLM with accessible weights and activations. Compare the base model and, if necessary, a LoRA adaptation trained only on the training split; then freeze the checkpoint, prompt, and threshold. Predictive baselines: majority class and TF-IDF with logistic regression.
+
+Use two class symbols verified to be single tokens. Define the score as the difference between their logits and the probability as a softmax restricted to the two options. This probability is not automatically calibrated. Predictive metrics: macro-F1, AUROC, and log-loss.
+
+**Planned environment:** Python, PyTorch, Transformers, PEFT for LoRA, tools for accessing activations that are compatible with the checkpoint, the [IPE/MIB](https://github.com/nepp1d0/MIB-circuit-track-with-paths) code, scikit-learn, and pandas. Compatibility must be verified during the pilot.
+
+### 3.3 Explainability, lexicon, and comparisons
+
+#### 3.3.1 Lexicon development
+
+Start from a documented English resource, such as selected categories from [NRC EmoLex](https://www.saifmohammad.com/WebPages/NRC-Emotion-Lexicon.htm). Record the source, version, categories, terms of use, matching rules, and token offsets. Any extension with expressions related to sleep, energy, or interest must be reviewed by people and developed without using the test set.
+
+Evaluate the matcher’s precision/recall and inter-annotator agreement on an independent sample. The categories are analytical tools: they do not assign diagnoses or PHQ-8 labels to sentences.
+
+#### 3.3.2 Search procedure
+
+1. **EAP-IG screening:** estimate edge importance and, where possible, retain contributions by position. [Hanna et al., 2024](https://arxiv.org/abs/2403.17806).
+2. **Lexical guidance:** combine a global ranking with a ranking based on positions covered by the lexicon and their context; select the weighting on the development set. The guidance changes candidate priorities while maintaining exploration beyond the lexicon.
+3. **Path interventions:** evaluate candidates using IPE, with a shared maximum compute budget, depth, and continuation rule. [Brunello et al., 2025](https://aclanthology.org/2025.blackboxnlp-1.30/).
+4. **Joint validation:** build circuits of comparable sizes and measure their behavior by intervening on contributions from outside the circuits. The effects of individual paths are not automatically additive.
+5. **Freezing:** evaluate the circuits on new data without rediscovering them on the test set.
+
+The original model’s input text and weights remain fixed. Runs with interventions are separate experiments: replacing activations changes the internal computation without necessarily changing the input tokens. Reference pairs must be consistent and aligned at the positions where interventions are performed.
+
+#### 3.3.3 Planned comparisons
+
+| Strategy | Role in the comparison |
+|---|---|
+| EAP-IG with standard edge selection | Baseline to assess whether additional path search is useful. |
+| Search with global prioritization | The same proposed procedure, without the lexical contribution. |
+| Search with lexical prioritization | The variant to be evaluated. |
+| Search with matched random masks | Control for the number, position, frequency, and length of spans. |
+| Search guided by token salience | Control to assess the advantage over information derived directly from the model. |
+| Original IPE and the position-aware method | Methodological references evaluated on a manageable subset with a comparable protocol. |
+
+[Position-aware Automatic Circuit Discovery](https://aclanthology.org/2025.acl-long.141/) already considers positions and semantic spans. The proposal must demonstrate the incremental value of the lexicon: combining existing techniques with DAIC alone does not guarantee originality. The salience control is not equivalent to reproducing the position-aware method.
+
+### 3.4 Quantitative analyses
+
+**Reference for faithfulness: the full model’s output on the same interview, not the observed PHQ-8.** Let `p_M(x)` denote the original output and `p_C(x; r)` the output obtained from the circuit under a fixed intervention reference:
+
+`E_fid(C) = mean_over_participants [abs(p_M(x) − p_C(x; r))]`
+
+The full graph must have near-zero error. It represents the theoretical maximum in faithfulness, but retains the entire model; therefore, compare circuits of equal size. Add an empty circuit and random subgraphs as controls; report when the reference produces a contrast too small to be informative.
+
+- **Efficiency:** error–GPU-time curve, area over a common interval, and cost to reach a tolerance set on the development set. Include screening, preparation of the guidance, and search; report annotation and final evaluation separately.
+- **Faithfulness and compactness:** error in probabilities and logits, class agreement, and number of edges/nodes.
+- **Generalization:** increase in error on paraphrases and unseen participants; distinguish instability in the original model from circuit unfaithfulness.
+- **Context:** distance between the changes in the model’s and circuit’s scores, `abs(Δs_M − Δs_C)`.
+- **Uncertainty:** paired comparisons, participant-level bootstrap, and repeated discovery runs. Set thresholds and minimum differences of interest before testing.
+
+Savings are a hypothesis: changing only the exploration order does not necessarily reduce costs if the same candidates are ultimately examined.
+
+### 3.5 Scope and fallback plan
+
+The core study comprises one model, one task, one lexicon, matched controls, and transfer to paraphrases. If IPE is too costly, switch to EAP-IG edge selection with validation through patching: the question becomes the **size–faithfulness** trade-off, without assuming savings in screening. If the PHQ-8 predictor still cannot be meaningfully studied after limited adaptation, transfer the methodological question to a simpler text task and update the title. Incorrect interventions must be repaired or replaced with validated tools before drawing causal conclusions.
+
+## 4. Planned experiments
+
+| Experiment | Hypothesis/Question addressed |
+|---|---|
+| **E0 — Data and lexicon preparation:** splits, coverage, agreement, and matcher quality. | H0, H2: reliability of the resource and comparisons. |
+| **E1 — Model and intervention pilot:** performance, technical replication, full/empty graph, memory, and runtime. | H0: conditions for proceeding and selection of a feasible scope. |
+| **E2 — Search with a controlled budget:** cost–faithfulness curves across strategies and circuit sizes. | H1, H2: efficiency and the specific contribution of the lexicon. |
+| **E3 — Transfer to unseen participants and paraphrases:** frozen circuits and distance from the original outputs. | H3: generalization beyond the discovery data and vocabulary. |
+| **E4 — Contextual variations:** negation, time, and person, with review of the pairs. | H4: reproduction of the model’s contextual sensitivity. |
+| **E5 — Robustness of the result:** repeated runs, alternative references, and coverage/size controls. | H1, H2: verification that the advantage is not an artifact of selection or patching. |
+| **E6 — Optional external replication:** a second configuration or compatible task. | H3: scope of the conclusions beyond the first experiment. |
+
+## 5. Titles based on experimental outcomes
+
+| Observed outcomes | Possible final title |
+|---|---|
+| E2 shows an advantage, E3 confirms its transfer, and E5 supports its robustness. | **Efficient and generalizable LLM circuit discovery through lexical guidance: a study on DAIC-WOZ.** |
+| E2 shows an advantage, but E3 reveals deterioration on paraphrases. | **Efficiency and generalization limits of lexical guidance in LLM circuit discovery.** |
+| E2 and E5 show negligible benefits over the controls, with sufficiently narrow intervals. | **Value and limitations of lexical guidance in circuit discovery: a controlled evaluation on DAIC-WOZ.** |
+| Differences remain uncertain due to variability or limited sample size. | **An experimental evaluation of lexical guidance in LLM circuit search on DAIC-WOZ.** |
+| The edge-based fallback plan is adopted, with faithfulness and transfer checks. | **Lexical guidance for circuit selection in LLMs: compactness, faithfulness, and generalization.** |
+
+---
+
+<a id="italiano"></a>
+
+**Language / Lingua:** [English](#english) · [Italiano](#italiano)
+
 # Piani di tesi per la discussione con il relatore
 
-[Proposta 00 — lessici e circuiti](#thesis-plan00) · [Proposta 01 — audit dell’intervista](#thesis-plan01)
-
-<a id="thesis-plan00"></a>
-
-# Thesis-plan00 — Guida lessicale alla scoperta dei circuiti
-
-## 1. Titolo
+## 1. Introduzione
 
 ### 1.1 Titolo proposto
 
@@ -120,13 +248,13 @@ Il nucleo comprende un modello, un task, un lessico, controlli abbinati e trasfe
 
 | Nome esperimento | A quale Ipotesi/Domanda risponde |
 |---|---|
-| **E0 — Preparazione di dati e lessico:** split, copertura, accordo e qualità del matcher. | H0, H2: affidabilità della risorsa e dei confronti. |
-| **E1 — Pilot del modello e degli interventi:** prestazioni, replica tecnica, grafo completo/vuoto, memoria e tempi. | H0: condizioni per proseguire e scelta del perimetro sostenibile. |
-| **E2 — Ricerca a budget controllato:** curve costo–fedeltà per strategie e dimensioni del circuito. | H1, H2: efficienza e contributo specifico del lessico. |
-| **E3 — Trasferimento a nuove persone e parafrasi:** circuiti congelati e distanza dagli output originali. | H3: generalizzazione oltre dati e vocabolario di scoperta. |
-| **E4 — Variazioni contestuali:** negazione, tempo e persona, con revisione delle coppie. | H4: riproduzione della sensibilità contestuale del modello. |
-| **E5 — Robustezza del risultato:** repliche, riferimenti alternativi e controlli di copertura/dimensione. | H1, H2: verifica che il vantaggio non sia un artefatto della selezione o del patching. |
-| **E6 — Replica esterna, opzionale:** seconda configurazione o task compatibile. | H3: portata delle conclusioni oltre il primo esperimento. |
+| **E0  Preparazione di dati e lessico:** split, copertura, accordo e qualità del matcher. | H0, H2: affidabilità della risorsa e dei confronti. |
+| **E1  Pilot del modello e degli interventi:** prestazioni, replica tecnica, grafo completo/vuoto, memoria e tempi. | H0: condizioni per proseguire e scelta del perimetro sostenibile. |
+| **E2  Ricerca a budget controllato:** curve costo–fedeltà per strategie e dimensioni del circuito. | H1, H2: efficienza e contributo specifico del lessico. |
+| **E3  Trasferimento a nuove persone e parafrasi:** circuiti congelati e distanza dagli output originali. | H3: generalizzazione oltre dati e vocabolario di scoperta. |
+| **E4  Variazioni contestuali:** negazione, tempo e persona, con revisione delle coppie. | H4: riproduzione della sensibilità contestuale del modello. |
+| **E5 Robustezza del risultato:** repliche, riferimenti alternativi e controlli di copertura/dimensione. | H1, H2: verifica che il vantaggio non sia un artefatto della selezione o del patching. |
+| **E6  Replica esterna, opzionale:** seconda configurazione o task compatibile. | H3: portata delle conclusioni oltre il primo esperimento. |
 
 ## 5. Titoli in base all’output degli esperimenti
 
